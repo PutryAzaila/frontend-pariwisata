@@ -1,0 +1,359 @@
+---
+// src/pages/tambah-usaha.astro
+import AdminLayout from '../layouts/AdminLayout.astro';
+import '../styles/global.css';
+
+---
+<AdminLayout>
+
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tambah Usaha Baru</title>
+  </head>
+  <body class="min-h-screen flex">
+    <!-- Main Content -->
+    <div class="flex-1 ml-64">
+      <div class="container mx-auto px-4 py-8 max-w-2xl">
+        <!-- Header -->
+        <div class="mb-8">
+          <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">Tambah Usaha Baru</h1>
+          <p class="text-gray-600 dark:text-gray-400">Lengkapi informasi usaha Anda di bawah ini</p>
+        </div>
+
+        <!-- Form Card -->
+        <div class="card card-hover">
+          <form id="businessForm" class="space-y-6">
+            <!-- Nama Usaha -->
+            <div>
+              <label for="businessName" class="form-label">
+                Nama Usaha *
+              </label>
+              <input
+                type="text"
+                id="businessName"
+                name="businessName"
+                required
+                class="form-input"
+                placeholder="Masukkan nama usaha"
+              />
+            </div>
+
+            <!-- Deskripsi -->
+            <div>
+              <label for="description" class="form-label">
+                Deskripsi Usaha
+              </label>
+              <textarea
+                id="description"
+                name="description"
+                rows="3"
+                class="form-input"
+                placeholder="Jelaskan tentang usaha Anda"
+              ></textarea>
+            </div>
+
+            <!-- Kategori -->
+            <div>
+              <label for="category" class="form-label">
+                Kategori *
+              </label>
+              <select
+                id="category"
+                name="category"
+                required
+                class="form-input"
+              >
+                <option value="">Pilih kategori</option>
+                <option value="makanan">Makanan & Minuman</option>
+                <option value="fashion">Fashion & Pakaian</option>
+                <option value="teknologi">Teknologi</option>
+                <option value="jasa">Jasa</option>
+                <option value="retail">Retail</option>
+                <option value="kesehatan">Kesehatan</option>
+                <option value="pendidikan">Pendidikan</option>
+                <option value="lainnya">Lainnya</option>
+              </select>
+            </div>
+
+            <!-- Icon Upload -->
+            <div>
+              <label class="form-label">
+                Icon Usaha
+              </label>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">
+                Upload icon untuk representasi visual usaha Anda (ukuran direkomendasikan: 64x64px)
+              </p>
+              <div class="space-y-4">
+                <!-- File Upload -->
+                <div>
+                  <label for="iconFile" class="block text-sm text-gray-600 dark:text-gray-400 mb-2">
+                    Upload File Icon (PNG, JPG, SVG)
+                  </label>
+                  <div class="relative">
+                    <input
+                      type="file"
+                      id="iconFile"
+                      name="iconFile"
+                      accept=".png,.jpg,.jpeg,.svg"
+                      class="hidden"
+                    />
+                    <button
+                      type="button"
+                      onclick="document.getElementById('iconFile').click()"
+                      class="w-full flex items-center justify-center px-4 py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 transition-all duration-300 card-hover"
+                    >
+                      <svg class="w-6 h-6 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                      </svg>
+                      <span class="text-gray-600 dark:text-gray-300">Klik untuk upload icon</span>
+                    </button>
+                  </div>
+                  <div id="fileName" class="mt-2 text-sm text-gray-500 dark:text-gray-400 hidden"></div>
+                </div>
+
+                <!-- Preview Area -->
+                <div id="iconPreview" class="hidden">
+                  <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Preview Icon:</p>
+                  <div class="flex items-center justify-center w-16 h-16 bg-gray-100 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-lg card-hover">
+                    <img id="previewImage" src="" alt="Icon preview" class="w-full h-full object-contain rounded-lg" />
+                  </div>
+                </div>
+
+                <!-- Icon URL Alternative -->
+                <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+                  <label for="iconUrl" class="block text-sm text-gray-600 dark:text-gray-400 mb-2">
+                    Atau masukkan URL icon
+                  </label>
+                  <input
+                    type="url"
+                    id="iconUrl"
+                    name="iconUrl"
+                    class="form-input"
+                    placeholder="https://example.com/icon.png"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Alamat -->
+            <div>
+              <label for="address" class="form-label">
+                Alamat Usaha
+              </label>
+              <textarea
+                id="address"
+                name="address"
+                rows="2"
+                class="form-input"
+                placeholder="Masukkan alamat lengkap usaha"
+              ></textarea>
+            </div>
+
+            <!-- Kontak -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label for="phone" class="form-label">
+                  Nomor Telepon
+                </label>
+                <input
+                  type="tel"
+                  id="phone"
+                  name="phone"
+                  class="form-input"
+                  placeholder="+62 xxx xxxx xxxx"
+                />
+              </div>
+              <div>
+                <label for="email" class="form-label">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  class="form-input"
+                  placeholder="email@contoh.com"
+                />
+              </div>
+            </div>
+
+            <!-- Website -->
+            <div>
+              <label for="website" class="form-label">
+                Website (Opsional)
+              </label>
+              <input
+                type="url"
+                id="website"
+                name="website"
+                class="form-input"
+                placeholder="https://website-usaha.com"
+              />
+            </div>
+
+            <!-- Tombol Submit -->
+            <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <button
+                type="button"
+                class="btn-secondary"
+                onclick="history.back()"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                class="btn-primary"
+              >
+                Simpan Usaha
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Handle file upload preview
+      document.getElementById('iconFile')?.addEventListener('change', function (e) {
+  const input = e.target as HTMLInputElement;   // pastikan ini input
+  const file = input.files?.[0] || null;        // ambil file pertama atau null
+        const fileName = document.getElementById('fileName') as HTMLElement; 
+        const iconPreview = document.getElementById('iconPreview') as HTMLElement;
+        const previewImage = document.getElementById('previewImage') as HTMLImageElement;
+
+        if (file) {
+            fileName.textContent = `File terpilih: ${file.name}`;
+            fileName.classList.remove('hidden');
+
+            // Preview gambar
+            if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                previewImage.src = event.target?.result as string;
+                iconPreview.classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+            } else {
+            iconPreview.classList.add('hidden');
+            }
+
+            // Clear URL input biar gak bentrok
+            (document.getElementById('iconUrl') as HTMLInputElement).value = '';
+        } else {
+            fileName.classList.add('hidden');
+            iconPreview.classList.add('hidden');
+        }
+        });
+      // Handle URL input
+      document.getElementById('iconUrl')?.addEventListener('input', function (e) {
+        const input = e.target as HTMLInputElement;   // pastikan ini input
+        const url = input.value;
+        const iconPreview = document.getElementById('iconPreview') as HTMLElement;
+        const previewImage = document.getElementById('previewImage') as HTMLImageElement;
+        const fileInput = document.getElementById('iconFile') as HTMLInputElement;
+        const fileName = document.getElementById('fileName') as HTMLElement;
+
+        if (url && isValidImageUrl(url)) {
+            previewImage.src = url;
+            iconPreview.classList.remove('hidden');
+
+            // Clear file input ketika URL dimasukkan
+            fileInput.value = '';
+            fileName.classList.add('hidden');
+        } else {
+            iconPreview.classList.add('hidden');
+        }
+        });
+
+
+      // Simple URL validation for images
+      function isValidImageUrl(url:string) {
+        try {
+          const urlObj = new URL(url);
+          return urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
+        } catch {
+          return false;
+        }
+      }
+
+      // Handle form submission
+      document.getElementById('businessForm')?.addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        const form = this as HTMLFormElement; // pastikan ini form
+        const formData = new FormData(form);
+        const businessData: Record<string, any> = Object.fromEntries(formData);
+
+        // Ambil input icon
+        const iconFileInput = document.getElementById('iconFile') as HTMLInputElement | null;
+        const iconUrlInput = document.getElementById('iconUrl') as HTMLInputElement | null;
+
+        const iconFile = iconFileInput?.files?.[0] || null;
+        const iconUrl = iconUrlInput?.value || '';
+
+        if (iconFile) {
+            businessData.iconType = 'file';
+            businessData.iconName = iconFile.name;
+        } else if (iconUrl) {
+            businessData.iconType = 'url';
+            businessData.iconUrl = iconUrl;
+        }
+
+        console.log(businessData);
+
+        // Tampilkan notifikasi
+        showNotification('success', 'Usaha berhasil ditambahkan!');
+
+        // Reset form
+        form.reset();
+        (document.getElementById('fileName') as HTMLElement)?.classList.add('hidden');
+        (document.getElementById('iconPreview') as HTMLElement)?.classList.add('hidden');
+        });
+
+
+      // Notification function
+      function showNotification(type:'info' | 'success' | 'error' | 'warning' = 'info', message: string) {
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        
+        const icon = type === 'success' ? '✓' : type === 'error' ? '✗' : type === 'warning' ? '⚠' : 'ℹ';
+        
+        notification.innerHTML = `
+          <div class="notification-content">
+            <span class="notification-icon">${icon}</span>
+            <span class="notification-message">${message}</span>
+            <span class="notification-close" onclick="closeNotification(this.parentElement.parentElement)">✕</span>
+          </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            closeNotification(notification);
+            }, 5000);
+
+            function closeNotification(notification: HTMLDivElement) {
+            notification.classList.add('notification-exit');
+            setTimeout(() => {
+                notification.remove();
+            }, 300);
+            }
+
+
+
+      // Mobile sidebar toggle (optional)
+      function toggleSidebar() {
+        const sidebar = document.querySelector('.w-64');
+        if (sidebar) {
+            sidebar.classList.toggle('-translate-x-full');
+                }
+           }
+      }
+    </script>
+  </body>
+</html>
+</AdminLayout>

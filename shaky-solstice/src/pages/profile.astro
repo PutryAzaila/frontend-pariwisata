@@ -1,0 +1,648 @@
+---
+import '../styles/global.css';
+import AdminLayout from '../layouts/AdminLayout.astro';
+import EditProfileModal from '../components/EditProfileModal.astro';
+---
+<AdminLayout>
+<!DOCTYPE html>
+<html lang="id" class="">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile Admin - Pariwisata Indonesia</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+
+  <!-- Content -->
+  <div class="container mx-auto px-6 py-12">
+    
+    <!-- Profile Header Card -->
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 mb-8 border border-gray-100 dark:border-gray-700">
+      <div class="flex flex-col lg:flex-row items-center gap-8">
+        <!-- Avatar Section -->
+        <div class="relative">
+          <div id="profile-avatar" class="w-32 h-32 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 p-1">
+            <div class="w-full h-full bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
+              <i class="fas fa-user text-gray-400 text-2xl"></i>
+            </div>
+          </div>
+          <div class="absolute -bottom-2 -right-2 w-10 h-10 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
+            <i class="fas fa-check text-white text-sm"></i>
+          </div>
+        </div>
+
+        <!-- Profile Info -->
+        <div class="text-center lg:text-left flex-1">
+          <div id="profile-name" class="mb-4">
+            <div class="h-8 bg-gray-200 dark:bg-gray-600 rounded-lg w-64 mx-auto lg:mx-0 animate-pulse"></div>
+          </div>
+          <div id="profile-role" class="mb-4">
+            <div class="h-6 bg-gray-200 dark:bg-gray-600 rounded-lg w-32 mx-auto lg:mx-0 animate-pulse"></div>
+          </div>
+          <div id="profile-badge" class="mb-4">
+            <div class="h-8 bg-gray-200 dark:bg-gray-600 rounded-full w-24 mx-auto lg:mx-0 animate-pulse"></div>
+          </div>
+        </div>
+
+        <!-- Edit Button -->
+        <div class="flex-shrink-0">
+          <button onclick="EditProfileModal.open()" class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200">
+            <i class="fas fa-edit mr-2"></i>
+            Edit Profile
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid lg:grid-cols-3 gap-8">
+      
+      <!-- Personal Information Card -->
+      <div class="lg:col-span-2">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 border border-gray-100 dark:border-gray-700">
+          <div class="flex items-center mb-6">
+            <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center mr-4">
+              <i class="fas fa-user text-white"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Informasi Pribadi</h2>
+          </div>
+          
+          <div id="profile-info" class="grid md:grid-cols-2 gap-8">
+            <!-- Loading skeleton will be replaced -->
+            <div class="space-y-6">
+              <div>
+                <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Nama Lengkap</label>
+                <div id="display-name" class="h-6 bg-gray-200 dark:bg-gray-600 rounded-lg animate-pulse"></div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Tanggal Bergabung</label>
+                <div id="display-join-date" class="h-6 bg-gray-200 dark:bg-gray-600 rounded-lg animate-pulse"></div>
+              </div>
+            </div>
+            <div class="space-y-6">
+              <div>
+                <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Email</label>
+                <div id="display-email" class="h-6 bg-gray-200 dark:bg-gray-600 rounded-lg animate-pulse"></div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Status Aktif</label>
+                <div id="display-status" class="h-6 bg-gray-200 dark:bg-gray-600 rounded-lg animate-pulse"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Activity Sidebar -->
+      <div class="lg:col-span-1">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 border border-gray-100 dark:border-gray-700 sticky top-8">
+          <div class="flex items-center mb-6">
+            <div class="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center mr-4">
+              <i class="fas fa-history text-white"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white">Aktivitas Terakhir</h3>
+          </div>
+          
+          <div id="activity-logs" class="space-y-4">
+            <!-- Loading states -->
+            <div class="flex items-start gap-4 p-4 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl border border-blue-200 dark:border-blue-700">
+              <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-spinner fa-spin text-white text-sm"></i>
+              </div>
+              <div class="min-w-0 flex-1">
+                <div class="h-4 bg-blue-200 dark:bg-blue-700 rounded animate-pulse mb-2"></div>
+                <div class="h-3 bg-blue-100 dark:bg-blue-800 rounded animate-pulse w-20"></div>
+              </div>
+            </div>
+            
+            <div class="flex items-start gap-4 p-4 bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-xl border border-green-200 dark:border-green-700">
+              <div class="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-spinner fa-spin text-white text-sm"></i>
+              </div>
+              <div class="min-w-0 flex-1">
+                <div class="h-4 bg-green-200 dark:bg-green-700 rounded animate-pulse mb-2"></div>
+                <div class="h-3 bg-green-100 dark:bg-green-800 rounded animate-pulse w-24"></div>
+              </div>
+            </div>
+            
+            <div class="flex items-start gap-4 p-4 bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-xl border border-purple-200 dark:border-purple-700">
+              <div class="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-spinner fa-spin text-white text-sm"></i>
+              </div>
+              <div class="min-w-0 flex-1">
+                <div class="h-4 bg-purple-200 dark:bg-purple-700 rounded animate-pulse mb-2"></div>
+                <div class="h-3 bg-purple-100 dark:bg-purple-800 rounded animate-pulse w-28"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Modern Error Modal -->
+  <div id="errorModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-md w-full shadow-2xl border border-gray-200 dark:border-gray-700">
+      <div class="flex items-center mb-6">
+        <div class="w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mr-4">
+          <i class="fas fa-exclamation-triangle text-red-500 text-xl"></i>
+        </div>
+        <h3 class="text-xl font-bold text-gray-900 dark:text-white">Terjadi Kesalahan</h3>
+      </div>
+      <p id="errorMessage" class="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed"></p>
+      <div class="flex gap-3">
+        <button onclick="closeErrorModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 px-6 py-3 rounded-xl font-medium transition-colors">
+          Tutup
+        </button>
+        <button onclick="retryFetch()" class="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-medium transition-all">
+          <i class="fas fa-redo mr-2"></i>
+          Coba Lagi
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script>
+    // Type definitions
+    type UserRole = 'admin' | 'pemdas' | 'bumdes' | 'pokdarwis';
+    
+    interface ActivityLog {
+      action: string;
+      created_at: string;
+      description: string;
+    }
+    
+    interface ProfileData {
+      id: string;
+      name: string;
+      email: string;
+      role: UserRole;
+      created_at: string;
+      status?: string; // Tambah field status
+      is_active?: boolean; // Tambah field is_active
+      permissions?: string[];
+      logs: ActivityLog[];
+    }
+    
+    interface APIResponse {
+      success: boolean;
+      message?: string;
+      data: ProfileData;
+    }
+
+    // API Configuration
+    const API_ENDPOINT = 'https://pengmas.hipmi-tup.com/dashboard/profile/detail';
+    
+    // Profile data storage
+    let profileData: ProfileData | null = null;
+
+    // Generate avatar colors based on name
+    function generateAvatarColors(name: string): { from: string; to: string } {
+      const colors = [
+        { from: 'from-blue-500', to: 'to-blue-600' },
+        { from: 'from-purple-500', to: 'to-purple-600' },
+        { from: 'from-green-500', to: 'to-green-600' },
+        { from: 'from-red-500', to: 'to-red-600' },
+        { from: 'from-yellow-500', to: 'to-yellow-600' },
+        { from: 'from-indigo-500', to: 'to-indigo-600' },
+        { from: 'from-pink-500', to: 'to-pink-600' },
+        { from: 'from-teal-500', to: 'to-teal-600' }
+      ];
+      
+      let hash = 0;
+      for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      const index = Math.abs(hash) % colors.length;
+      return colors[index];
+    }
+
+    // Get initials from name
+    function getInitials(name: string): string {
+      return name
+        .split(' ')
+        .map(word => word.charAt(0))
+        .join('')
+        .substring(0, 2)
+        .toUpperCase();
+    }
+
+    // Get user status display
+    function getUserStatus(data: ProfileData): { text: string; color: string; icon: string } {
+      // Priority 1: Use status from backend if available
+      if (data.status) {
+        if (data.status.toLowerCase() === 'active' || data.status.toLowerCase() === 'aktif') {
+          return { text: 'Aktif', color: 'text-green-600 dark:text-green-400', icon: 'fas fa-check-circle' };
+        }
+        if (data.status.toLowerCase() === 'inactive' || data.status.toLowerCase() === 'tidak aktif') {
+          return { text: 'Tidak Aktif', color: 'text-red-600 dark:text-red-400', icon: 'fas fa-times-circle' };
+        }
+        if (data.status.toLowerCase() === 'suspended' || data.status.toLowerCase() === 'ditangguhkan') {
+          return { text: 'Ditangguhkan', color: 'text-yellow-600 dark:text-yellow-400', icon: 'fas fa-pause-circle' };
+        }
+      }
+      
+      // Priority 2: Use is_active boolean if available
+      if (typeof data.is_active === 'boolean') {
+        return data.is_active 
+          ? { text: 'Aktif', color: 'text-green-600 dark:text-green-400', icon: 'fas fa-check-circle' }
+          : { text: 'Tidak Aktif', color: 'text-red-600 dark:text-red-400', icon: 'fas fa-times-circle' };
+      }
+      
+      // Default: Assume active
+      return { text: 'Aktif', color: 'text-green-600 dark:text-green-400', icon: 'fas fa-check-circle' };
+    }
+
+    // Fetch profile data from API
+    async function fetchProfileData(): Promise<void> {
+      try {
+        const token = getAuthToken();
+        const headers: HeadersInit = {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        };
+        
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(API_ENDPOINT, {
+          method: 'GET',
+          headers
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result: APIResponse = await response.json();
+        
+        if (result.success) {
+          profileData = result.data;
+          populateProfile(profileData);
+        } else {
+          throw new Error(result.message || 'Failed to fetch profile data');
+        }
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        showError('Gagal memuat data profil: ' + errorMessage);
+      }
+    }
+
+    // Populate profile data
+    function populateProfile(data: ProfileData): void {
+      const initials = getInitials(data.name);
+      const colors = generateAvatarColors(data.name);
+      const userStatus = getUserStatus(data);
+
+      // Avatar with initials
+      const avatar = document.getElementById('profile-avatar');
+      if (avatar) {
+        avatar.innerHTML = `
+          <div class="w-full h-full bg-gradient-to-br ${colors.from} ${colors.to} rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-inner">
+            ${initials}
+          </div>
+        `;
+      }
+
+      // Profile Name
+      const profileName = document.getElementById('profile-name');
+      if (profileName) {
+        profileName.innerHTML = `
+          <h1 id="mainProfileName" class="text-3xl font-bold text-gray-900 dark:text-white">
+            ${data.name}
+          </h1>
+        `;
+      }
+
+      // Profile Role
+      const profileRole = document.getElementById('profile-role');
+      if (profileRole) {
+        profileRole.innerHTML = `
+          <p class="text-lg text-blue-600 dark:text-blue-400 font-medium">
+            ${getRoleDisplayName(data.role)}
+          </p>
+        `;
+      }
+
+      // Profile Badge
+      const profileBadge = document.getElementById('profile-badge');
+      if (profileBadge) {
+        profileBadge.innerHTML = `
+          <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-gradient-to-r from-blue-100 to-purple-100 text-blue-800 dark:from-blue-900 dark:to-purple-900 dark:text-blue-100 border border-blue-200 dark:border-blue-700">
+            <i class="fas fa-shield-alt mr-2"></i>
+            ${getRoleDisplayName(data.role)}
+          </span>
+        `;
+      }
+
+      // Profile Info - Updated dengan Status Aktif
+      const profileInfo = document.getElementById('profile-info');
+      if (profileInfo) {
+        profileInfo.innerHTML = `
+          <div class="space-y-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Nama Lengkap</label>
+              <p id="displayFullName" class="text-lg font-semibold text-gray-900 dark:text-white">${data.name}</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Tanggal Bergabung</label>
+              <p id="displayJoinDate" class="text-lg text-gray-700 dark:text-gray-300">${formatDate(data.created_at)}</p>
+            </div>
+          </div>
+          <div class="space-y-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Email</label>
+              <p id="displayEmail" class="text-lg text-gray-700 dark:text-gray-300">${data.email}</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Status Aktif</label>
+              <p id="displayStatus" class="flex items-center gap-2">
+                <i class="${userStatus.icon} ${userStatus.color}"></i>
+                <span class="text-lg font-semibold ${userStatus.color}">${userStatus.text}</span>
+              </p>
+            </div>
+          </div>
+        `;
+      }
+
+      // Populate activity logs
+      populateActivityLogs(data.logs);
+    }
+
+    // Fungsi untuk mendapatkan description langsung dari backend
+    function getActivityDescription(log: ActivityLog): string {
+      // Langsung gunakan description dari backend
+      if (log.description && log.description.trim() !== '') {
+        return log.description;
+      }
+      
+      // Fallback jika backend tidak mengirim description
+      return log.action || 'Aktivitas tidak diketahui';
+    }
+
+    // Fungsi untuk mendapatkan icon berdasarkan action
+    function getActivityIcon(log: ActivityLog): string {
+      const action = log.action?.toLowerCase() || '';
+      
+      // Mapping icon berdasarkan kata kunci dalam action
+      if (action.includes('login')) return 'fas fa-sign-in-alt';
+      if (action.includes('logout')) return 'fas fa-sign-out-alt';
+      if (action.includes('create') || action.includes('add')) return 'fas fa-plus';
+      if (action.includes('update') || action.includes('edit')) return 'fas fa-edit';
+      if (action.includes('delete') || action.includes('remove')) return 'fas fa-trash';
+      if (action.includes('view') || action.includes('show')) return 'fas fa-eye';
+      if (action.includes('download') || action.includes('export')) return 'fas fa-download';
+      if (action.includes('upload') || action.includes('import')) return 'fas fa-upload';
+      if (action.includes('profile')) return 'fas fa-user-edit';
+      if (action.includes('password')) return 'fas fa-key';
+      if (action.includes('report')) return 'fas fa-chart-bar';
+      if (action.includes('backup')) return 'fas fa-database';
+      if (action.includes('settings')) return 'fas fa-cog';
+      
+      return 'fas fa-cog'; // Default icon
+    }
+
+    // Fungsi untuk mengurutkan dan membatasi aktivitas - YANG TERBARU DI ATAS
+    function sortAndLimitLogs(logs: ActivityLog[]): ActivityLog[] {
+      if (!logs || logs.length === 0) return [];
+      
+      // Urutkan berdasarkan created_at DESC (yang terbaru di atas)
+      const sortedLogs = logs.sort((a, b) => {
+        const dateA = new Date(a.created_at).getTime();
+        const dateB = new Date(b.created_at).getTime();
+        return dateB - dateA; // DESC order
+      });
+      
+      // Ambil hanya 5 aktivitas teratas
+      return sortedLogs.slice(0, 5);
+    }
+
+    // Update fungsi populateActivityLogs - HANYA MENGGUNAKAN DATA BACKEND
+    function populateActivityLogs(logs: ActivityLog[]): void {
+      const container = document.getElementById('activity-logs');
+      if (!container) return;
+
+      // Urutkan dan batasi data dari backend
+      const processedLogs = sortAndLimitLogs(logs);
+
+      if (processedLogs.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-8">
+            <div class="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+              <i class="fas fa-inbox text-gray-400 text-xl"></i>
+            </div>
+            <p class="text-gray-500 dark:text-gray-400 font-medium">Belum ada aktivitas</p>
+            <p class="text-gray-400 dark:text-gray-500 text-sm mt-1">Aktivitas akan muncul di sini</p>
+          </div>
+        `;
+        return;
+      }
+
+      const activityStyles = [
+        { bg: 'from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20', border: 'border-blue-200 dark:border-blue-700', icon: 'bg-blue-500' },
+        { bg: 'from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20', border: 'border-green-200 dark:border-green-700', icon: 'bg-green-500' },
+        { bg: 'from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20', border: 'border-purple-200 dark:border-purple-700', icon: 'bg-purple-500' },
+        { bg: 'from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20', border: 'border-orange-200 dark:border-orange-700', icon: 'bg-orange-500' },
+        { bg: 'from-teal-50 to-teal-100 dark:from-teal-900/20 dark:to-teal-800/20', border: 'border-teal-200 dark:border-teal-700', icon: 'bg-teal-500' }
+      ];
+
+      let html = '';
+      
+      // Render maksimal 5 aktivitas yang sudah diurutkan
+      processedLogs.forEach((log, index) => {
+        const style = activityStyles[index % activityStyles.length];
+        const dateTime = formatDateTime(log.created_at);
+        
+        // GUNAKAN DESCRIPTION LANGSUNG DARI BACKEND
+        const description = getActivityDescription(log);
+        const iconClass = getActivityIcon(log);
+        
+        // Badge "Baru" hanya untuk aktivitas pertama (terbaru) jika masih recent
+        const isRecent = isRecentActivity(log.created_at);
+        const recentBadge = isRecent && index === 0 ? `
+          <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400 ml-2">
+            <span class="w-1.5 h-1.5 bg-red-500 rounded-full mr-1 animate-pulse"></span>
+            Baru
+          </span>
+        ` : '';
+        
+        html += `
+          <div class="flex items-start gap-4 p-4 bg-gradient-to-r ${style.bg} rounded-xl border ${style.border} hover:shadow-md transition-all duration-200 ${isRecent && index === 0 ? 'ring-2 ring-blue-200 dark:ring-blue-800' : ''}">
+            <div class="w-10 h-10 ${style.icon} rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
+              <i class="${iconClass} text-white text-sm"></i>
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center flex-wrap gap-2">
+                <p class="text-sm font-medium text-gray-900 dark:text-white">${description}</p>
+                ${recentBadge}
+              </div>
+              <div class="flex items-center gap-2 mt-1">
+                <p class="text-xs text-gray-500 dark:text-gray-400">${dateTime.date}</p>
+                <span class="w-1 h-1 bg-gray-400 rounded-full"></span>
+                <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">${dateTime.time}</p>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+      
+      // Debug log untuk development (opsional)
+      console.log(`Menampilkan ${processedLogs.length} aktivitas teratas dari ${logs.length} total aktivitas`);
+    }
+
+    // Fungsi helper untuk mengecek aktivitas baru
+    function isRecentActivity(dateString: string): boolean {
+      const activityDate = new Date(dateString);
+      const now = new Date();
+      const diffInMinutes = (now.getTime() - activityDate.getTime()) / (1000 * 60);
+      return diffInMinutes < 5; // Dianggap baru jika kurang dari 5 menit
+    }
+
+    // Fungsi helper untuk format tanggal dan waktu
+    function formatDateTime(dateString: string): { date: string; time: string } {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffInMinutes = (now.getTime() - date.getTime()) / (1000 * 60);
+      const diffInHours = diffInMinutes / 60;
+      const diffInDays = diffInHours / 24;
+      
+      let dateStr = '';
+      
+      if (diffInMinutes < 1) {
+        dateStr = 'Baru saja';
+      } else if (diffInMinutes < 60) {
+        dateStr = `${Math.floor(diffInMinutes)} menit yang lalu`;
+      } else if (diffInHours < 24) {
+        dateStr = `${Math.floor(diffInHours)} jam yang lalu`;
+      } else if (diffInDays < 2) {
+        dateStr = 'Kemarin';
+      } else if (diffInDays < 7) {
+        dateStr = `${Math.floor(diffInDays)} hari yang lalu`;
+      } else {
+        dateStr = date.toLocaleDateString('id-ID', { 
+          day: 'numeric', 
+          month: 'short',
+          year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+        });
+      }
+      
+      const timeStr = date.toLocaleTimeString('id-ID', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: false
+      });
+      
+      return { date: dateStr, time: timeStr };
+    }
+    // Helper functions
+    function getRoleDisplayName(role: UserRole): string {
+      const roleMap: Record<UserRole, string> = {
+        admin: 'Administrator',
+        pemdas: 'Pemdes',
+        bumdes: 'BUMDes',
+        pokdarwis: 'Pokdarwis',
+      };
+      return roleMap[role] || role;
+    }
+
+    function formatDate(dateString: string): string {
+      const options: Intl.DateTimeFormatOptions = {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      };
+      return new Date(dateString).toLocaleDateString('id-ID', options);
+    }
+
+    function showError(message: string): void {
+      const errorMessageEl = document.getElementById('errorMessage');
+      const errorModalEl = document.getElementById('errorModal');
+
+      if (errorMessageEl) {
+        errorMessageEl.textContent = message;
+      }
+
+      if (errorModalEl) {
+        errorModalEl.classList.remove('hidden');
+        errorModalEl.classList.add('flex');
+      }
+    }
+
+    function closeErrorModal(): void {
+      const modal = document.getElementById('errorModal');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
+    function retryFetch(): void {
+      closeErrorModal();
+      fetchProfileData();
+    }
+
+    function getAuthToken(): string {
+      const tokenSources = [
+        localStorage.getItem('auth_token'),
+        localStorage.getItem('access_token'),
+        localStorage.getItem('token'),
+        localStorage.getItem('jwt_token'),
+        sessionStorage.getItem('auth_token'),
+        sessionStorage.getItem('access_token'),
+        getCookie('auth_token'),
+        getCookie('access_token')
+      ];
+      
+      return tokenSources.find(token => token && token.trim() !== '') || '';
+    }
+    
+    function getCookie(name: string): string {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) {
+        return parts.pop()?.split(';').shift() || '';
+      }
+      return '';
+    }
+
+    // Register functions to global scope
+    (window as any).retryFetch = retryFetch;
+    (window as any).closeErrorModal = closeErrorModal;
+    (window as any).fetchProfileData = fetchProfileData;
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      const html = document.documentElement;
+      const darkModeToggle = document.getElementById('darkModeToggle');
+
+      if (localStorage.getItem('theme') === 'dark') {
+        html.classList.add('dark');
+      }
+
+      if (darkModeToggle) {
+        darkModeToggle.addEventListener('click', () => {
+          html.classList.toggle('dark');
+          localStorage.setItem(
+            'theme',
+            html.classList.contains('dark') ? 'dark' : 'light'
+          );
+        });
+      }
+
+      fetchProfileData();
+    });
+  </script>
+</body>
+</html>
+
+<!-- Include the EditProfileModal component -->
+<EditProfileModal />
+</AdminLayout>

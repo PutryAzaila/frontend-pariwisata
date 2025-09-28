@@ -1,0 +1,419 @@
+---
+// DataTableComponent.astro
+export interface Props {
+  title: string;
+  color: string;
+  icon: string;
+  usahaList: Array<{
+    id: string;
+    name: string;
+    periode: string;
+  }>;
+  type: string;
+}
+
+const { title, color, icon, usahaList, type } = Astro.props;
+---
+
+<div class="datatable-container">
+  <!-- Stats Cards - Responsive Grid -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
+    <div class="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-lg card-hover">
+      <div class="flex items-center justify-between">
+        <div class="flex-1 min-w-0">
+          <p class="text-gray-600 text-xs md:text-sm font-medium mb-1">Total Uang Masuk</p>
+          <p class="text-xl md:text-3xl font-bold text-green-600 truncate" id={`${type}_totalMasuk`}>Rp 0</p>
+        </div>
+        <div class="w-12 h-12 md:w-16 md:h-16 bg-green-100 rounded-full flex items-center justify-center ml-3 flex-shrink-0">
+          <i class="fas fa-arrow-up text-green-600 text-lg md:text-2xl"></i>
+        </div>
+      </div>
+    </div>
+    
+    <div class="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-lg card-hover">
+      <div class="flex items-center justify-between">
+        <div class="flex-1 min-w-0">
+          <p class="text-gray-600 text-xs md:text-sm font-medium mb-1">Total Uang Keluar</p>
+          <p class="text-xl md:text-3xl font-bold text-red-600 truncate" id={`${type}_totalKeluar`}>Rp 0</p>
+        </div>
+        <div class="w-12 h-12 md:w-16 md:h-16 bg-red-100 rounded-full flex items-center justify-center ml-3 flex-shrink-0">
+          <i class="fas fa-arrow-down text-red-600 text-lg md:text-2xl"></i>
+        </div>
+      </div>
+    </div>
+    
+    <div class="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-lg card-hover sm:col-span-2 lg:col-span-1">
+      <div class="flex items-center justify-between">
+        <div class="flex-1 min-w-0">
+          <p class="text-gray-600 text-xs md:text-sm font-medium mb-1">Saldo Akhir</p>
+          <p class={`text-xl md:text-3xl font-bold text-${color}-600 truncate`} id={`${type}_saldoAkhir`}>Rp 0</p>
+        </div>
+        <div class={`w-12 h-12 md:w-16 md:h-16 bg-${color}-100 rounded-full flex items-center justify-center ml-3 flex-shrink-0`}>
+          <i class={`fas fa-wallet text-${color}-600 text-lg md:text-2xl`}></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Control Panel - Responsive -->
+  <div class="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-lg mb-6 md:mb-8">
+    <!-- Header Section -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <h2 class="text-xl md:text-2xl font-bold text-gray-800 flex items-center">
+        <i class={`${icon} mr-3 text-${color}-600`}></i>
+        <span class="truncate">Dashboard {title}</span>
+      </h2>
+      
+      <!-- Action Buttons -->
+      <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
+        <button 
+          onclick={`openModal('${type}')`} 
+         class={`bg-${color}-600 text-white px-4 py-2 md:px-6 md:py-3 rounded-lg 
+        hover:bg-${color}-700 transition-all duration-300 
+        shadow-lg hover:shadow-xl transform hover:-translate-y-1 
+        text-sm md:text-base`}
+        >
+          <i class="fas fa-plus mr-2"></i>
+          <span class="hidden sm:inline">Tambah Transaksi</span>
+          <span class="sm:hidden">Tambah</span>
+        </button>
+        <button 
+          onclick={`exportToExcel('${type}')`}
+          class="bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-2 md:px-6 md:py-3 rounded-lg hover:from-green-600 hover:to-green-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 text-sm md:text-base"
+        >
+          <i class="fas fa-file-excel mr-2"></i>
+          <span class="hidden sm:inline">Export Excel</span>
+          <span class="sm:hidden">Excel</span>
+        </button>
+        <button 
+          onclick={`printReport('${type}')`} 
+          class="bg-gradient-to-r from-gray-500 to-gray-600 text-white px-4 py-2 md:px-6 md:py-3 rounded-lg hover:from-gray-600 hover:to-gray-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 text-sm md:text-base"
+        >
+          <i class="fas fa-print mr-2"></i>
+          <span class="hidden sm:inline">Print Laporan</span>
+          <span class="sm:hidden">Print</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Filters - Responsive Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
+      <div class="sm:col-span-2 lg:col-span-1">
+        <label class="block text-gray-700 text-sm font-medium mb-2">
+          <i class="fas fa-briefcase mr-1 text-gray-500"></i>
+          Filter Jenis Usaha
+        </label>
+        <select 
+          id={`${type}_filterUsaha`} 
+          class={`w-full px-3 py-2 md:px-4 md:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${color}-500 focus:border-transparent transition-all duration-200 text-sm md:text-base`}
+        >
+          <option value="">Semua Usaha</option>
+          {usahaList.map(usaha => (
+            <option value={usaha.id}>{usaha.name}</option>
+          ))}
+        </select>
+      </div>
+      
+      <div>
+        <label class="block text-gray-700 text-sm font-medium mb-2">
+          <i class="fas fa-calendar-alt mr-1 text-gray-500"></i>
+          Dari Tanggal
+        </label>
+        <input 
+          type="date" 
+          id={`${type}_dateFrom`} 
+          class={`w-full px-3 py-2 md:px-4 md:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${color}-500 focus:border-transparent transition-all duration-200 text-sm md:text-base`}
+        />
+      </div>
+      
+      <div>
+        <label class="block text-gray-700 text-sm font-medium mb-2">
+          <i class="fas fa-calendar-check mr-1 text-gray-500"></i>
+          Sampai Tanggal
+        </label>
+        <input 
+          type="date" 
+          id={`${type}_dateTo`} 
+          class={`w-full px-3 py-2 md:px-4 md:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${color}-500 focus:border-transparent transition-all duration-200 text-sm md:text-base`}
+        />
+      </div>
+
+      <div class="flex flex-col">
+        <label class="block text-gray-700 text-sm font-medium mb-2">
+          <i class="fas fa-filter mr-1 text-gray-500"></i>
+          Status
+        </label>
+        <div class="flex gap-2">
+          <select 
+            id={`${type}_filterStatus`} 
+            class={`flex-1 px-3 py-2 md:px-4 md:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${color}-500 focus:border-transparent transition-all duration-200 text-sm md:text-base`}
+          >
+            <option value="">Semua Status</option>
+            <option value="masuk">Uang Masuk</option>
+            <option value="keluar">Uang Keluar</option>
+          </select>
+          <button 
+            onclick={`resetFilters('${type}')`}
+            class="bg-gray-200 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-300 transition-all duration-200 text-sm whitespace-nowrap"
+            title="Reset Filter"
+          >
+            <i class="fas fa-refresh"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DataTable - Responsive Container -->
+  <div class="bg-white rounded-xl md:rounded-2xl shadow-lg overflow-hidden">
+    <div class="p-4 md:p-6">
+      <div class="overflow-x-auto">
+        <table id={`${type}_table`} class="w-full table-auto min-w-[800px]">
+          <thead>
+            <tr class="bg-gray-50">
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                Tanggal
+              </th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                Hari
+              </th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                Jenis Usaha
+              </th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                Uang Masuk
+              </th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                Uang Keluar
+              </th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                Net Total
+              </th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                Keterangan
+              </th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                Action
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Data akan di-populate oleh DataTables -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Form - Responsive -->
+<div id="transactionModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 w-full max-w-md mx-auto max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between mb-6">
+      <h3 class="text-lg md:text-xl font-bold text-gray-800 flex items-center">
+        <i class="fas fa-plus mr-2"></i>
+        <span class="truncate">Tambah Transaksi {title}</span>
+      </h3>
+      <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 transition-colors p-1">
+        <i class="fas fa-times text-xl"></i>
+      </button>
+    </div>
+
+    <form id="transactionForm" class="space-y-4">
+      <div>
+        <label class="block text-gray-700 text-sm font-medium mb-2">
+          <i class="fas fa-briefcase mr-1"></i>Jenis Usaha
+        </label>
+        <select 
+          id="jenisUsaha" 
+          required
+          class={`w-full px-3 py-3 md:px-4 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${color}-500 focus:border-transparent transition-all duration-200 text-sm md:text-base`}
+        >
+          {usahaList.map(usaha => (
+            <option value={usaha.id}>{usaha.name} ({usaha.periode})</option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-gray-700 text-sm font-medium mb-2">
+          <i class="fas fa-exchange-alt mr-1"></i>Tipe Transaksi
+        </label>
+        <select 
+          id="tipeTransaksi" 
+          required
+          class={`w-full px-3 py-3 md:px-4 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${color}-500 focus:border-transparent transition-all duration-200 text-sm md:text-base`}
+        >
+          <option value="masuk">💰 Uang Masuk</option>
+          <option value="keluar">💸 Uang Keluar</option>
+        </select>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3 md:gap-4">
+        <div>
+          <label class="block text-gray-700 text-sm font-medium mb-2">
+            <i class="fas fa-money-bill mr-1"></i>Nominal
+          </label>
+          <input 
+            type="number" 
+            id="nominal" 
+            required
+            min="0"
+            step="1000"
+            class={`w-full px-3 py-3 md:px-4 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${color}-500 focus:border-transparent transition-all duration-200 text-sm md:text-base`}
+            placeholder="0"
+          />
+        </div>
+
+        <div>
+          <label class="block text-gray-700 text-sm font-medium mb-2">
+            <i class="fas fa-cut mr-1"></i>Potongan
+          </label>
+          <input 
+            type="number" 
+            id="potongan" 
+            min="0"
+            step="1000"
+            class={`w-full px-3 py-3 md:px-4 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${color}-500 focus:border-transparent transition-all duration-200 text-sm md:text-base`}
+            placeholder="0"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-gray-700 text-sm font-medium mb-2">
+          <i class="fas fa-calendar mr-1"></i>Tanggal
+        </label>
+        <input 
+          type="date" 
+          id="tanggalTransaksi" 
+          required
+          class={`w-full px-3 py-3 md:px-4 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${color}-500 focus:border-transparent transition-all duration-200 text-sm md:text-base`}
+        />
+      </div>
+
+      <div>
+        <label class="block text-gray-700 text-sm font-medium mb-2">
+          <i class="fas fa-sticky-note mr-1"></i>Keterangan
+        </label>
+        <textarea 
+          id="keterangan" 
+          class={`w-full px-3 py-3 md:px-4 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${color}-500 focus:border-transparent transition-all duration-200 resize-none text-sm md:text-base`}
+          placeholder="Masukkan keterangan transaksi..."
+          rows="3"
+        ></textarea>
+      </div>
+
+      <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 pt-4">
+        <button 
+          type="button"
+          onclick="closeModal()"
+          class="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg hover:bg-gray-300 transition-all duration-300 font-medium text-sm md:text-base"
+        >
+          <i class="fas fa-times mr-2"></i>Batal
+        </button>
+        <button 
+          type="submit" 
+          class={`flex-1 bg-gradient-to-r from-${color}-500 to-${color}-600 text-white py-3 rounded-lg hover:from-${color}-600 hover:to-${color}-700 transition-all duration-300 shadow-lg font-medium text-sm md:text-base`}
+        >
+          <i class="fas fa-save mr-2"></i>Simpan
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<style>
+  .card-hover {
+    transition: all 0.3s ease;
+  }
+  
+  .card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+  
+  /* Custom scrollbar for table */
+  .overflow-x-auto::-webkit-scrollbar {
+    height: 8px;
+  }
+  
+  .overflow-x-auto::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+  }
+  
+  .overflow-x-auto::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+  }
+  
+  .overflow-x-auto::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+
+  /* Mobile optimizations */
+  @media (max-width: 640px) {
+    .datatable-container {
+      padding: 0 4px;
+    }
+  }
+</style>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const container = document.getElementById("datatableContainer");
+    if (!container) return; // hentikan script jika elemen tidak ditemukan
+
+    const tableId = `${container.dataset.type}_table`;
+    
+    // Initialize DataTable with responsive configuration (buttons removed)
+    $(`#${tableId}`).DataTable({
+      responsive: {
+        details: {
+          type: 'column',
+          target: 'tr'
+        }
+      },
+      pageLength: 10,
+      lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+      // Modified dom - removed 'B' for buttons
+      dom: '<"flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4"<"flex-1"l><"flex-1 text-center"f>>rtip',
+      // Removed buttons configuration entirely
+      language: {
+        url: "https://cdn.datatables.net/plug-ins/1.13.5/i18n/id.json",
+        searchPlaceholder: "Cari data...",
+        search: "",
+        lengthMenu: "Tampilkan _MENU_ data per halaman"
+      },
+      order: [[0, 'desc']], // Default order by date descending
+      columnDefs: [
+        {
+          targets: [3, 4, 5], // Kolom nominal
+          className: 'text-right',
+          render: function(data: number, type: string, row: any) {
+            if (type === 'display' || type === 'type') {
+              return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0
+              }).format(data || 0);
+            }
+            return data;
+          }
+        },
+        {
+          targets: -1, // Kolom action
+          orderable: false,
+          searchable: false,
+          className: 'text-center'
+        }
+      ],
+      scrollX: true,
+      fixedHeader: {
+        header: true,
+        headerOffset: 60
+      }
+    });
+  });
+</script>

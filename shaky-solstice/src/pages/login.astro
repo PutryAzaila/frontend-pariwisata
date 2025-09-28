@@ -1,0 +1,632 @@
+---
+export const prerender = false;
+import '../styles/global.css';
+
+const title = "Login Admin - Sistem Pariwisata";
+---
+
+<!DOCTYPE html>
+<html lang="id" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{title}</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="h-full">
+    <!-- Dark Mode Toggle -->
+    <div class="fixed top-4 left-4 z-50">
+        <button 
+            id="theme-toggle"
+            class="btn-secondary p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
+            title="Toggle Dark Mode"
+        >
+            <i id="theme-icon" class="fas fa-moon text-lg"></i>
+        </button>
+    </div>
+
+    <div class="min-h-full flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-md w-full space-y-8">
+            <!-- Header -->
+            <div class="text-center">
+                <div class="mx-auto w-20 h-20 bg-gradient-to-r from-blue-600 to-emerald-600 rounded-full flex items-center justify-center shadow-lg">
+                    <i class="fas fa-map-marked-alt text-white text-2xl"></i>
+                </div>
+                <h2 class="mt-6 text-3xl font-bold text-blue-900 dark:text-blue-200">
+                    Admin Pariwisata
+                </h2>
+                <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                    Silakan masuk ke panel administrasi
+                </p>
+            </div>
+
+            <!-- Login Form -->
+            <form id="login-form" class="mt-8 space-y-6">
+                <div class="card">
+                    <div class="space-y-6">
+                        <!-- Email Field -->
+                        <div class="relative">
+                            <label for="email" class="login-label">
+                                Email Administrator
+                            </label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-envelope text-gray-400"></i>
+                                </div>
+                                <input 
+                                    id="email" 
+                                    name="email" 
+                                    type="email" 
+                                    required 
+                                    class="login-input"
+                                    placeholder="admin@gmail.com"
+                                >
+                            </div>
+                        </div>
+
+                        <!-- Password Field -->
+                        <div class="relative">
+                            <label for="password" class="login-label">
+                                Kata Sandi
+                            </label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-lock text-gray-400"></i>
+                                </div>
+                                <input 
+                                    id="password" 
+                                    name="password" 
+                                    type="password" 
+                                    required 
+                                    class="login-input pr-12"
+                                    placeholder="••••••••"
+                                >
+                                <button 
+                                    type="button" 
+                                    id="password-toggle"
+                                    class="absolute inset-y-0 right-0 pr-3 flex items-center"
+                                >
+                                    <i id="password-icon" class="fas fa-eye text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Forgot Password -->
+                        <div class="flex items-center justify-end">
+                            <div class="text-sm">
+                                <a href="/forgotpassword" class="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">
+                                    Lupa kata sandi?
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Login Button -->
+                        <button 
+                            type="submit" 
+                            id="login-btn"
+                            class="group relative w-full btn-primary py-3 text-base shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300"
+                        >
+                            <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+                                <i class="fas fa-sign-in-alt text-white opacity-75 group-hover:opacity-100 transition-opacity"></i>
+                            </span>
+                            Masuk ke Dashboard
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Additional Info -->
+            <div class="text-center">
+                <p class="text-xs text-gray-500 dark:text-gray-300">
+                    Sistem Manajemen Pariwisata <br>
+                </p>
+                <div class="mt-4 flex justify-center space-x-4 text-gray-400 dark:text-gray-400">
+                    <i class="fas fa-globe-asia" title="Platform Global"></i>
+                    <i class="fas fa-map-pin" title="Lokasi Terpercaya"></i>
+                    <i class="fas fa-shield-alt" title="Keamanan Terjamin"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Background Decorative Elements -->
+    <div class="fixed inset-0 -z-10 overflow-hidden">
+        <div class="absolute -top-40 -right-32 w-96 h-96 bg-gradient-to-br from-blue-400/20 to-emerald-400/20 rounded-full blur-3xl dark:from-blue-600/10 dark:to-emerald-600/10"></div>
+        <div class="absolute -bottom-40 -left-32 w-96 h-96 bg-gradient-to-tr from-emerald-400/20 to-blue-400/20 rounded-full blur-3xl dark:from-emerald-600/10 dark:to-blue-600/10"></div>
+    </div>
+
+    <!-- Client-side Script -->
+    <script>
+        // API Configuration
+        const API_BASE_URL = 'https://pengmas.hipmi-tup.com/login';
+        
+        // Function to get dashboard URL from backend or fallback
+        function getDashboardUrl(userData: any): string {
+            // Prioritas 1: Ambil dari response backend jika ada
+            if (userData.dashboard_url) {
+                return userData.dashboard_url;
+            }
+            
+            // Prioritas 2: Ambil dari user profile jika ada
+            if (userData.profile?.dashboard_url) {
+                return userData.profile.dashboard_url;
+            }
+            
+            // Prioritas 3: Fallback ke root dashboard
+            return '/';
+        }
+
+        // Function to store user permissions
+        function storeUserPermissions(userData: any): void {
+            try {
+                console.log('Storing user permissions:', userData);
+                
+                // Store permissions jika ada
+                if (userData.permissions && Array.isArray(userData.permissions)) {
+                    localStorage.setItem('user_permissions', JSON.stringify(userData.permissions));
+                    console.log('Permissions stored:', userData.permissions);
+                } else {
+                    localStorage.setItem('user_permissions', JSON.stringify([]));
+                    console.log('No permissions found, storing empty array');
+                }
+
+                // Store role
+                if (userData.role) {
+                    localStorage.setItem('user_role', userData.role);
+                    console.log('Role stored:', userData.role);
+                }
+
+            } catch (error) {
+                console.error('Error storing user permissions:', error);
+            }
+        }
+
+        // Check if user is already logged in
+        function checkIfAlreadyLoggedIn(): boolean {
+            if (typeof window === 'undefined') return false;
+            
+            const token = localStorage.getItem('access_token');
+            const userData = localStorage.getItem('user_data');
+            const loginTime = localStorage.getItem('login_time');
+            
+            if (token && userData && loginTime) {
+                try {
+                    const user = JSON.parse(userData);
+                    const loginDate = new Date(loginTime);
+                    const now = new Date();
+                    
+                    const timeDiff = now.getTime() - loginDate.getTime();
+                    const hoursDiff = timeDiff / (1000 * 3600);
+                    
+                    if (hoursDiff < 24) {
+                        const dashboardUrl = getDashboardUrl(user);
+                        showNotification(`Anda sudah login sebagai ${user.name || 'Admin'}. Mengarahkan ke dashboard...`, 'info');
+                        
+                        setTimeout(() => {
+                            window.location.href = dashboardUrl;
+                        }, 2000);
+                        
+                        return true;
+                    } else {
+                        clearLoginData();
+                        showNotification('Sesi login telah berakhir. Silakan login kembali.', 'warning');
+                    }
+                } catch (error) {
+                    console.error('Error parsing user data:', error);
+                    clearLoginData();
+                }
+            }
+            
+            return false;
+        }
+
+        // Dark mode functionality
+        function initializeTheme(): void {
+            if (typeof window === 'undefined') return;
+            
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const html = document.documentElement;
+            const themeIcon = document.getElementById('theme-icon');
+            
+            if (html && themeIcon) {
+                if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+                    html.classList.add('dark');
+                    themeIcon.className = 'fas fa-sun text-lg';
+                } else {
+                    html.classList.remove('dark');
+                    themeIcon.className = 'fas fa-moon text-lg';
+                }
+            }
+        }
+
+        function toggleDarkMode(): void {
+            if (typeof window === 'undefined') return;
+            
+            const html = document.documentElement;
+            const themeIcon = document.getElementById('theme-icon');
+            
+            if (html && themeIcon) {
+                const isDark = html.classList.contains('dark');
+                
+                if (isDark) {
+                    html.classList.remove('dark');
+                    themeIcon.className = 'fas fa-moon text-lg';
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    html.classList.add('dark');
+                    themeIcon.className = 'fas fa-sun text-lg';
+                    localStorage.setItem('theme', 'dark');
+                }
+            }
+        }
+
+        function togglePassword(): void {
+            const passwordInput = document.getElementById('password') as HTMLInputElement;
+            const passwordIcon = document.getElementById('password-icon');
+            
+            if (!passwordInput || !passwordIcon) return;
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                passwordIcon.className = 'fas fa-eye-slash text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors';
+            } else {
+                passwordInput.type = 'password';
+                passwordIcon.className = 'fas fa-eye text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors';
+            }
+        }
+
+        // Notification function
+        function showNotification(message: string, type: string = 'info'): void {
+            const existingNotifications = document.querySelectorAll('.notification');
+            existingNotifications.forEach(notif => notif.remove());
+            
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            
+            switch(type) {
+                case 'success':
+                    notification.classList.add('notification-success');
+                    break;
+                case 'error':
+                    notification.classList.add('notification-error');
+                    break;
+                case 'warning':
+                    notification.classList.add('notification-warning');
+                    break;
+                case 'info':
+                default:
+                    notification.classList.add('notification-info');
+                    break;
+            }
+            
+            let iconClass: string;
+            switch(type) {
+                case 'success':
+                    iconClass = 'fa-check-circle';
+                    break;
+                case 'error':
+                    iconClass = 'fa-exclamation-circle';
+                    break;
+                case 'warning':
+                    iconClass = 'fa-exclamation-triangle';
+                    break;
+                case 'info':
+                default:
+                    iconClass = 'fa-info-circle';
+                    break;
+            }
+            
+            notification.innerHTML = `
+                <div class="notification-content">
+                    <div class="notification-icon">
+                        <i class="fas ${iconClass}"></i>
+                    </div>
+                    <div class="notification-message">
+                        ${message}
+                    </div>
+                    <div class="notification-close" onclick="this.closest('.notification').remove()">
+                        <i class="fas fa-times"></i>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (notification && notification.parentNode) {
+                    notification.classList.add('notification-exit');
+                    setTimeout(() => {
+                        if (notification.parentNode) {
+                            notification.parentNode.removeChild(notification);
+                        }
+                    }, 300);
+                }
+            }, 5000);
+        }
+
+        // API call for login
+        async function loginToAPI(email: string, password: string) {
+            try {
+                const response = await fetch(`${API_BASE_URL}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password
+                    })
+                });
+
+                const responseData = await response.json();
+                
+                if (response.ok && responseData.success) {
+                    const { data } = responseData;
+                    
+                    if (data && data.access_token) {
+                        localStorage.setItem('access_token', data.access_token);
+                        localStorage.setItem('token_type', data.token_type);
+                        localStorage.setItem('user_data', JSON.stringify(data.user));
+
+                        // Store user permissions
+                        storeUserPermissions(data.user);
+
+                        return { 
+                            success: true, 
+                            data: responseData,
+                            user: data.user,
+                        };
+                    } else {
+                        return { success: false, message: 'Token tidak ditemukan dalam response' };
+                    }
+                } else {
+                    return { 
+                        success: false, 
+                        message: responseData.message || 'Login gagal. Periksa email dan password Anda.' 
+                    };
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                return { 
+                    success: false, 
+                    message: 'Terjadi kesalahan koneksi. Pastikan server backend berjalan.' 
+                };
+            }
+        }
+
+        async function handleLogin(event: Event): Promise<void> {
+            if (!event || typeof event.preventDefault !== 'function') return;
+            event.preventDefault();
+            
+            const emailElement = document.getElementById('email') as HTMLInputElement;
+            const passwordElement = document.getElementById('password') as HTMLInputElement;
+            
+            if (!emailElement || !passwordElement) return;
+            
+            const email = emailElement.value.trim();
+            const password = passwordElement.value;
+            
+            if (!email || !password) {
+                showNotification('Mohon lengkapi semua field yang diperlukan!', 'error');
+                return;
+            }
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showNotification('Format email tidak valid! Contoh: admin@pariwisata.com', 'error');
+                return;
+            }
+            
+            const button = document.getElementById('login-btn') as HTMLButtonElement;
+            if (!button) return;
+            
+            const originalText = button.innerHTML;
+            
+            button.innerHTML = `
+                <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+                    <i class="fas fa-spinner fa-spin text-white opacity-75"></i>
+                </span>
+                Memproses Login...
+            `;
+            button.disabled = true;
+            
+            try {
+                const result = await loginToAPI(email, password);
+                
+                if (result.success) {
+                    const userName = result.user ? result.user.name : 'Admin';
+                    
+                    showNotification(`Selamat datang, ${userName}! Login berhasil. Redirecting ke dashboard...`, 'success');
+                    
+                    localStorage.setItem('login_time', new Date().toISOString());
+                    
+                    // Get dashboard URL from backend response or fallback
+                    const dashboardUrl = getDashboardUrl(result.user);
+                    
+                    setTimeout(() => {
+                        window.location.href = dashboardUrl;
+                    }, 2000);
+                } else {
+                    showNotification(`Login Gagal: ${result.message}`, 'error');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showNotification('Terjadi kesalahan yang tidak terduga! Silakan coba lagi.', 'error');
+            } finally {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        }
+
+        function checkExistingLogin(): void {
+            if (typeof window === 'undefined') return;
+            
+            const token = localStorage.getItem('access_token');
+            
+            if (token) {
+                checkIfAlreadyLoggedIn();
+            }
+        }
+
+        function clearLoginData(): void {
+            if (typeof window === 'undefined') return;
+
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('token_type');
+            localStorage.removeItem('user_data');
+            localStorage.removeItem('login_time');
+            localStorage.removeItem('user_role');
+            localStorage.removeItem('user_permissions');
+        }
+
+        function isUserLoggedIn(): boolean {
+            const token = localStorage.getItem('access_token');
+            const userData = localStorage.getItem('user_data');
+            const loginTime = localStorage.getItem('login_time');
+            
+            if (!token || !userData || !loginTime) {
+                return false;
+            }
+            
+            try {
+                const loginDate = new Date(loginTime);
+                const now = new Date();
+                const timeDiff = now.getTime() - loginDate.getTime();
+                const hoursDiff = timeDiff / (1000 * 3600);
+                
+                return hoursDiff < 24;
+            } catch (error) {
+                return false;
+            }
+        }
+
+        function initAnimations(): void {
+            const elements = document.querySelectorAll('.space-y-8 > div');
+            elements.forEach((element, index) => {
+                if (!(element instanceof HTMLElement)) return;
+                
+                const elementStyle = element.style;
+                if (elementStyle) {
+                    elementStyle.opacity = '0';
+                    elementStyle.transform = 'translateY(20px)';
+                    
+                    setTimeout(() => {
+                        elementStyle.transition = 'all 0.6s ease-out';
+                        elementStyle.opacity = '1';
+                        elementStyle.transform = 'translateY(0)';
+                    }, index * 200);
+                }
+            });
+        }
+
+        function initValidation(): void {
+            const inputs = document.querySelectorAll('input[required]');
+            inputs.forEach(input => {
+                if (!(input instanceof HTMLInputElement)) return;
+                
+                input.addEventListener('blur', event => {
+                    const target = event.target as HTMLInputElement;
+                    const classList = target.classList;
+                    
+                    if (!target.value.trim()) {
+                        classList.add('border-red-300', 'focus:ring-red-500');
+                        classList.remove('border-gray-300', 'focus:ring-blue-500');
+                    } else {
+                        classList.remove('border-red-300', 'focus:ring-red-500');
+                        classList.add('border-gray-300', 'focus:ring-blue-500');
+                    }
+                });
+
+                if (input.type === 'email') {
+                    input.addEventListener('input', event => {
+                        const target = event.target as HTMLInputElement;
+                        const value = target.value.trim();
+                        const classList = target.classList;
+                        
+                        if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+                            classList.add('border-yellow-300', 'focus:ring-yellow-500');
+                            classList.remove('border-gray-300', 'focus:ring-blue-500', 'border-red-300', 'focus:ring-red-500');
+                        } else if (value) {
+                            classList.add('border-green-300', 'focus:ring-green-500');
+                            classList.remove('border-gray-300', 'focus:ring-blue-500', 'border-red-300', 'focus:ring-red-500', 'border-yellow-300', 'focus:ring-yellow-500');
+                        } else {
+                            classList.add('border-gray-300', 'focus:ring-blue-500');
+                            classList.remove('border-red-300', 'focus:ring-red-500', 'border-yellow-300', 'focus:ring-yellow-500', 'border-green-300', 'focus:ring-green-500');
+                        }
+                    });
+                }
+            });
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            const isAlreadyLoggedIn = checkIfAlreadyLoggedIn();
+            
+            if (!isAlreadyLoggedIn) {
+                initializeTheme();
+                initAnimations();
+                initValidation();
+                checkExistingLogin();
+                
+                const themeToggle = document.getElementById('theme-toggle');
+                if (themeToggle) {
+                    themeToggle.addEventListener('click', toggleDarkMode);
+                }
+                
+                const passwordToggle = document.getElementById('password-toggle');
+                if (passwordToggle) {
+                    passwordToggle.addEventListener('click', togglePassword);
+                }
+                
+                const loginForm = document.getElementById('login-form');
+                if (loginForm) {
+                    loginForm.addEventListener('submit', handleLogin);
+                }
+
+                document.addEventListener('keypress', event => {
+                    if (event.key === 'Enter') {
+                        const loginForm = document.getElementById('login-form');
+                        if (loginForm && document.activeElement && 
+                            (document.activeElement.id === 'email' || document.activeElement.id === 'password')) {
+                            event.preventDefault();
+                            handleLogin(event);
+                        }
+                    }
+                });
+            } else {
+                const inputs = document.querySelectorAll('#login-form input, #login-form button');
+                
+                inputs.forEach(input => {
+                    if (input instanceof HTMLElement) {
+                        input.style.opacity = '0.5';
+                        input.style.pointerEvents = 'none';
+                        if (input instanceof HTMLInputElement || input instanceof HTMLButtonElement) {
+                            input.disabled = true;
+                        }
+                    }
+                });
+                
+                initializeTheme();
+                
+                const themeToggle = document.getElementById('theme-toggle');
+                if (themeToggle) {
+                    themeToggle.addEventListener('click', toggleDarkMode);
+                }
+            }
+        });
+
+        // Handle network errors
+        if (typeof window !== 'undefined') {
+            window.addEventListener('online', () => {
+                showNotification('Koneksi internet tersambung kembali', 'success');
+            });
+
+            window.addEventListener('offline', () => {
+                showNotification('Koneksi internet terputus', 'error');
+            });
+        }
+    </script>
+</body>
+</html>

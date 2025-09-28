@@ -1,0 +1,708 @@
+<!-- ---
+interface BusinessField {
+  name: string;
+  type: string;
+  label: string;
+  required: boolean;
+  options?: Array<{value: string, label: string}>;
+  validation?: {
+    min?: number;
+    max?: number;
+    pattern?: string;
+  };
+}
+
+interface BusinessColumn {
+  data: string;
+  name: string;
+  title: string;
+  orderable?: boolean;
+  searchable?: boolean;
+  className?: string;
+  render?: string;
+}
+
+interface BusinessConfig {
+  fields: BusinessField[];
+  columns: BusinessColumn[];
+  endpoints: {
+    base: string;
+    fields: string;
+    columns: string;
+    data: string;
+    create: string;
+    update: string;
+    delete: string;
+  };
+}
+
+class BusinessManager {
+  private businessType: 'pokdarwis' | 'bumdes';
+  private config: BusinessConfig | null = null;
+  private table: any = null;
+  private currentSubType: string = '';
+  private editingId: number | null = null;
+
+  constructor(businessType: 'pokdarwis' | 'bumdes') {
+    this.businessType = businessType;
+  }
+
+  async initialize(): Promise<void> {
+    try {
+      this.showLoader();
+      
+      const subTypes = await this.getAvailableSubTypes();
+      
+      if (subTypes.length === 0) {
+        throw new Error(`Tidak ada tipe usaha ${this.businessType} yang tersedia`);
+      }
+
+      // Use first subtype as default or get from URL
+      this.currentSubType = this.getSubTypeFromUrl() || subTypes[0];
+      
+      await this.loadConfig(this.currentSubType);
+      await this.initializeDataTable();
+      this.setupEventListeners();
+      this.showContent();
+      
+      console.log(`✅ ${this.businessType} initialized successfully`);
+      
+    } catch (error) {
+      console.error(`❌ Failed to initialize ${this.businessType}:`, error);
+      this.showError();
+    }
+  }
+
+  private async getAvailableSubTypes(): Promise<string[]> {
+    const permissions = this.getUserPermissions();
+    const subTypes: string[] = [];
+    
+    permissions.forEach(permission => {
+      const prefix = `${this.businessType}.`;
+      if (permission.startsWith(prefix) && (permission.includes('.viewAny') || permission.includes('.view'))) {
+        const parts = permission.split('.');
+        if (parts.length >= 2) {
+          const subType = parts[1];
+          if (!subTypes.includes(subType)) {
+            subTypes.push(subType);
+          }
+        }
+      }
+    });
+    
+    console.log(`Available ${this.businessType} types:`, subTypes);
+    return subTypes;
+  }
+
+  private getSubTypeFromUrl(): string | null {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('type');
+  }
+
+  private async loadConfig(subType: string): Promise<void> {
+    const token = localStorage.getItem('access_token');
+    const tokenType = localStorage.getItem('token_type') || 'Bearer';
+    
+    if (!token) {
+      throw new Error('Token tidak ditemukan');
+    }
+
+    const baseUrl = `https://pengmas.hipmi-tup.com/dashboard/${this.businessType}`;
+    
+    const [fieldsResponse, columnsResponse] = await Promise.all([
+      fetch(`${baseUrl}/${subType}/fields`, {
+        headers: {
+          'Authorization': `${tokenType} ${token}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      }),
+      fetch(`${baseUrl}/${subType}/columns`, {
+        headers: {
+          'Authorization': `${tokenType} ${token}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      })
+    ]);
+
+    if (!fieldsResponse.ok) {
+      throw new Error(`Failed to load fields: ${fieldsResponse.status}`);
+    }
+    
+    if (!columnsResponse.ok) {
+      throw new Error(`Failed to load columns: ${columnsResponse.status}`);
+    }
+
+    const fieldsData = await fieldsResponse.json();
+    const columnsData = await columnsResponse.json();
+
+    this.config = {
+      fields: fieldsData.data || fieldsData,
+      columns: columnsData.data || columnsData,
+      endpoints: {
+        base: `${baseUrl}/${subType}`,
+        fields: `${baseUrl}/${subType}/fields`,
+        columns: `${baseUrl}/${subType}/columns`,
+        data: `${baseUrl}/${subType}`,
+        create: `${baseUrl}/${subType}`,
+        update: `${baseUrl}/${subType}`,
+        delete: `${baseUrl}/${subType}`
+      }
+    };
+
+    // Update page title
+    this.updatePageTitle(subType);
+    
+    console.log(`${this.businessType} config loaded:`, this.config);
+  }
+
+  private updatePageTitle(subType: string): void {
+    const titleElement = document.getElementById(`${this.businessType}-title`);
+    if (titleElement) {
+      const formattedName = this.formatBusinessTypeName(subType);
+      const businessTypeLabel = this.businessType === 'pokdarwis' ? 'Pokdarwis' : 'BUMDes';
+      titleElement.textContent = `${businessTypeLabel} - ${formattedName}`;
+    }
+  }
+
+  private async initializeDataTable(): Promise<void> {
+    if (!this.config) {
+      throw new Error(`${this.businessType} config not loaded`);
+    }
+
+    await this.loadDataTablesScripts();
+
+    // Prepare columns with action column
+    const columns = [...this.config.columns];
+    
+    // Add action column
+    columns.push({
+      data: null,
+      name: 'actions',
+      title: 'Aksi',
+      orderable: false,
+      searchable: false,
+      className: 'text-center',
+      render: `function(data, type, row) {
+        return \`
+          <div class="flex gap-2 justify-center">
+            <button onclick="businessManager.editTransaction(\${row.id})" 
+                    class="px-3 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button onclick="businessManager.deleteTransaction(\${row.id})" 
+                    class="px-3 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        \`;
+      }`
+    });
+
+    // Initialize DataTable
+    this.table = $(`#${this.businessType}-table`).DataTable({
+      processing: true,
+      serverSide: true,
+      ajax: {
+        url: this.config.endpoints.data,
+        type: 'GET',
+        headers: {
+          'Authorization': `${localStorage.getItem('token_type') || 'Bearer'} ${localStorage.getItem('access_token')}`,
+          'Accept': 'application/json'
+        },
+        data: (params: any) => {
+          // Add filters to request
+          const filters = this.getActiveFilters();
+          return { ...params, ...filters };
+        },
+        dataSrc: (response: any) => {
+          this.updateSummaryCards(response);
+          return response.data || response;
+        },
+        error: (xhr: any, error: any, code: any) => {
+          console.error('DataTable AJAX error:', error, code);
+          this.showNotification('Gagal memuat data', 'error');
+        }
+      },
+      columns: columns,
+      responsive: true,
+      pageLength: 10,
+      lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+      dom: '<"modern-datatable-header"<"search-container"f><"length-container"l>>rtip',
+      language: {
+        url: "https://cdn.datatables.net/plug-ins/1.13.5/i18n/id.json",
+        searchPlaceholder: "Cari transaksi...",
+        search: "",
+        lengthMenu: "Tampilkan _MENU_ data",
+        info: "Menampilkan _START_ - _END_ dari _TOTAL_ transaksi",
+        infoEmpty: "Tidak ada data",
+        infoFiltered: "(difilter dari _MAX_ total)",
+        paginate: {
+          first: "Awal",
+          last: "Akhir",
+          next: "Berikutnya",
+          previous: "Sebelumnya"
+        },
+        processing: "Memuat data..."
+      },
+      order: [[0, 'desc']]
+    });
+
+    console.log('DataTable initialized');
+  }
+
+  private setupEventListeners(): void {
+    // Filter listeners
+    $(`#${this.businessType}-filter-usaha`).on('change', () => {
+      this.table?.ajax.reload();
+    });
+
+    $(`#${this.businessType}-filter-status`).on('change', () => {
+      this.table?.ajax.reload();
+    });
+
+    $(`#${this.businessType}-date-from, #${this.businessType}-date-to`).on('change', () => {
+      this.table?.ajax.reload();
+    });
+
+    // Form submission
+    const form = document.getElementById('transaction-form') as HTMLFormElement;
+    form?.addEventListener('submit', this.handleFormSubmission.bind(this));
+  }
+
+  private getActiveFilters(): Record<string, any> {
+    const filters: Record<string, any> = {};
+    
+    const usahaFilter = document.getElementById(`${this.businessType}-filter-usaha`) as HTMLSelectElement;
+    const statusFilter = document.getElementById(`${this.businessType}-filter-status`) as HTMLSelectElement;
+    const dateFrom = document.getElementById(`${this.businessType}-date-from`) as HTMLInputElement;
+    const dateTo = document.getElementById(`${this.businessType}-date-to`) as HTMLInputElement;
+    
+    if (usahaFilter?.value) filters.usaha = usahaFilter.value;
+    if (statusFilter?.value) filters.status = statusFilter.value;
+    if (dateFrom?.value) filters.date_from = dateFrom.value;
+    if (dateTo?.value) filters.date_to = dateTo.value;
+    
+    return filters;
+  }
+
+  private async handleFormSubmission(event: Event): Promise<void> {
+    event.preventDefault();
+    
+    if (!this.config) return;
+    
+    const formData = new FormData(event.target as HTMLFormElement);
+    const data: Record<string, any> = {};
+    
+    // Convert FormData to object
+    for (const [key, value] of formData.entries()) {
+      data[key] = value;
+    }
+    
+    try {
+      const url = this.editingId 
+        ? `${this.config.endpoints.update}/${this.editingId}`
+        : this.config.endpoints.create;
+      
+      const method = this.editingId ? 'PUT' : 'POST';
+      
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Authorization': `${localStorage.getItem('token_type') || 'Bearer'} ${localStorage.getItem('access_token')}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      const message = this.editingId 
+        ? 'Transaksi berhasil diperbarui'
+        : 'Transaksi berhasil ditambahkan';
+      
+      this.showNotification(message, 'success');
+      this.closeTransactionModal();
+      this.table?.ajax.reload();
+      
+    } catch (error: any) {
+      console.error('Failed to save transaction:', error);
+      this.showNotification(error.message || 'Gagal menyimpan transaksi', 'error');
+    }
+  }
+
+  async editTransaction(id: number): Promise<void> {
+    if (!this.config) return;
+    
+    try {
+      const response = await fetch(`${this.config.endpoints.base}/${id}`, {
+        headers: {
+          'Authorization': `${localStorage.getItem('token_type') || 'Bearer'} ${localStorage.getItem('access_token')}`,
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
+      const result = await response.json();
+      const data = result.data || result;
+      
+      // Set editing mode
+      this.editingId = id;
+      
+      // Populate form with existing data
+      this.populateTransactionForm(data);
+      this.openTransactionModal();
+      
+      // Update modal title
+      const modalTitle = document.querySelector('#transaction-modal h3');
+      if (modalTitle) {
+        modalTitle.textContent = 'Edit Transaksi';
+      }
+      
+    } catch (error) {
+      console.error('Failed to load transaction:', error);
+      this.showNotification('Gagal memuat data transaksi', 'error');
+    }
+  }
+
+  async deleteTransaction(id: number): Promise<void> {
+    if (!this.config) return;
+    
+    if (!confirm('Yakin ingin menghapus transaksi ini?')) {
+      return;
+    }
+    
+    try {
+      const response = await fetch(`${this.config.endpoints.delete}/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `${localStorage.getItem('token_type') || 'Bearer'} ${localStorage.getItem('access_token')}`,
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
+      this.showNotification('Transaksi berhasil dihapus', 'success');
+      this.table?.ajax.reload();
+      
+    } catch (error) {
+      console.error('Failed to delete transaction:', error);
+      this.showNotification('Gagal menghapus transaksi', 'error');
+    }
+  }
+
+  openTransactionModal(): void {
+    if (!this.config) return;
+    
+    this.renderTransactionForm();
+    document.getElementById('transaction-modal')?.classList.remove('hidden');
+  }
+
+  closeTransactionModal(): void {
+    document.getElementById('transaction-modal')?.classList.add('hidden');
+    
+    // Reset form and editing state
+    const form = document.getElementById('transaction-form') as HTMLFormElement;
+    form?.reset();
+    this.editingId = null;
+    
+    // Reset modal title
+    const modalTitle = document.querySelector('#transaction-modal h3');
+    if (modalTitle) {
+      modalTitle.textContent = 'Tambah Transaksi';
+    }
+  }
+
+  private renderTransactionForm(): void {
+    if (!this.config) return;
+    
+    const container = document.getElementById('form-fields');
+    if (!container) return;
+    
+    let html = '';
+    
+    this.config.fields.forEach(field => {
+      html += `<div class="form-group">`;
+      html += `<label class="block text-sm font-medium text-gray-700 mb-1">${field.label}${field.required ? ' *' : ''}</label>`;
+      
+      switch (field.type) {
+        case 'select':
+          html += `<select name="${field.name}" class="w-full px-3 py-2 border border-gray-300 rounded-md" ${field.required ? 'required' : ''}>`;
+          html += `<option value="">Pilih ${field.label}</option>`;
+          field.options?.forEach(option => {
+            html += `<option value="${option.value}">${option.label}</option>`;
+          });
+          html += `</select>`;
+          break;
+        
+        case 'textarea':
+          html += `<textarea name="${field.name}" class="w-full px-3 py-2 border border-gray-300 rounded-md" rows="3" ${field.required ? 'required' : ''}></textarea>`;
+          break;
+        
+        case 'number':
+          html += `<input type="number" name="${field.name}" class="w-full px-3 py-2 border border-gray-300 rounded-md" ${field.required ? 'required' : ''} ${field.validation?.min ? `min="${field.validation.min}"` : ''} ${field.validation?.max ? `max="${field.validation.max}"` : ''}>`;
+          break;
+        
+        case 'date':
+          html += `<input type="date" name="${field.name}" class="w-full px-3 py-2 border border-gray-300 rounded-md" ${field.required ? 'required' : ''}>`;
+          break;
+        
+        case 'datetime-local':
+          html += `<input type="datetime-local" name="${field.name}" class="w-full px-3 py-2 border border-gray-300 rounded-md" ${field.required ? 'required' : ''}>`;
+          break;
+        
+        case 'email':
+          html += `<input type="email" name="${field.name}" class="w-full px-3 py-2 border border-gray-300 rounded-md" ${field.required ? 'required' : ''}>`;
+          break;
+        
+        case 'tel':
+          html += `<input type="tel" name="${field.name}" class="w-full px-3 py-2 border border-gray-300 rounded-md" ${field.required ? 'required' : ''}>`;
+          break;
+        
+        default:
+          html += `<input type="text" name="${field.name}" class="w-full px-3 py-2 border border-gray-300 rounded-md" ${field.required ? 'required' : ''} ${field.validation?.pattern ? `pattern="${field.validation.pattern}"` : ''}>`;
+          break;
+      }
+      
+      html += `</div>`;
+    });
+    
+    container.innerHTML = html;
+  }
+
+  private populateTransactionForm(data: any): void {
+    this.config?.fields.forEach(field => {
+      const input = document.querySelector(`[name="${field.name}"]`) as HTMLInputElement;
+      if (input && data[field.name] !== undefined) {
+        if (field.type === 'date' && data[field.name]) {
+          // Handle date formatting
+          const date = new Date(data[field.name]);
+          if (!isNaN(date.getTime())) {
+            input.value = date.toISOString().split('T')[0];
+          }
+        } else if (field.type === 'datetime-local' && data[field.name]) {
+          // Handle datetime formatting
+          const datetime = new Date(data[field.name]);
+          if (!isNaN(datetime.getTime())) {
+            const offset = datetime.getTimezoneOffset() * 60000;
+            const localDateTime = new Date(datetime.getTime() - offset);
+            input.value = localDateTime.toISOString().slice(0, 16);
+          }
+        } else {
+          input.value = data[field.name];
+        }
+      }
+    });
+  }
+
+  private updateSummaryCards(response: any): void {
+    const summary = response.summary || {};
+    
+    const totalMasukEl = document.getElementById(`${this.businessType}-total-masuk`);
+    const totalKeluarEl = document.getElementById(`${this.businessType}-total-keluar`);
+    const saldoAkhirEl = document.getElementById(`${this.businessType}-saldo-akhir`);
+    const totalTransaksiEl = document.getElementById(`${this.businessType}-total-transaksi`);
+    
+    if (totalMasukEl) totalMasukEl.textContent = this.formatCurrency(summary.total_masuk || 0);
+    if (totalKeluarEl) totalKeluarEl.textContent = this.formatCurrency(summary.total_keluar || 0);
+    if (saldoAkhirEl) {
+      const saldo = (summary.total_masuk || 0) - (summary.total_keluar || 0);
+      saldoAkhirEl.textContent = this.formatCurrency(saldo);
+      saldoAkhirEl.className = `text-xl font-bold ${saldo >= 0 ? 'text-green-600' : 'text-red-600'}`;
+    }
+    if (totalTransaksiEl) totalTransaksiEl.textContent = (response.recordsTotal || 0).toString();
+  }
+
+  resetFilters(): void {
+    const filterUsaha = document.getElementById(`${this.businessType}-filter-usaha`) as HTMLSelectElement;
+    const filterStatus = document.getElementById(`${this.businessType}-filter-status`) as HTMLSelectElement;
+    const dateFrom = document.getElementById(`${this.businessType}-date-from`) as HTMLInputElement;
+    const dateTo = document.getElementById(`${this.businessType}-date-to`) as HTMLInputElement;
+    
+    if (filterUsaha) filterUsaha.value = '';
+    if (filterStatus) filterStatus.value = '';
+    if (dateFrom) dateFrom.value = '';
+    if (dateTo) dateTo.value = '';
+    
+    this.table?.ajax.reload();
+  }
+
+  exportToExcel(): void {
+    if (!this.config) return;
+    
+    const filters = this.getActiveFilters();
+    const params = new URLSearchParams();
+    params.append('export', 'excel');
+    
+    // Add filters to export
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value) params.append(key, value.toString());
+    });
+    
+    const url = `${this.config.endpoints.data}?${params.toString()}`;
+    
+    // Create temporary link and trigger download
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${this.businessType}-${this.currentSubType}-${new Date().toISOString().split('T')[0]}.xlsx`;
+    
+    // Add authorization header via hidden form for file download
+    const form = document.createElement('form');
+    form.method = 'GET';
+    form.action = url;
+    form.style.display = 'none';
+    
+    const authInput = document.createElement('input');
+    authInput.type = 'hidden';
+    authInput.name = 'authorization';
+    authInput.value = `${localStorage.getItem('token_type') || 'Bearer'} ${localStorage.getItem('access_token')}`;
+    
+    form.appendChild(authInput);
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
+  }
+
+  private formatBusinessTypeName(businessType: string): string {
+    return businessType.split('-').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
+  }
+
+  private formatCurrency(amount: number): string {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount || 0);
+  }
+
+  private getUserPermissions(): string[] {
+    try {
+      const permissions = localStorage.getItem('user_permissions');
+      return permissions ? JSON.parse(permissions) : [];
+    } catch (error) {
+      console.error('Error parsing user permissions:', error);
+      return [];
+    }
+  }
+
+  // UI State management
+  private showLoader(): void {
+    document.getElementById(`${this.businessType}-loader`)?.classList.remove('hidden');
+    document.getElementById(`${this.businessType}-content`)?.classList.add('hidden');
+    document.getElementById(`${this.businessType}-error`)?.classList.add('hidden');
+  }
+
+  private showContent(): void {
+    document.getElementById(`${this.businessType}-loader`)?.classList.add('hidden');
+    document.getElementById(`${this.businessType}-content`)?.classList.remove('hidden');
+    document.getElementById(`${this.businessType}-error`)?.classList.add('hidden');
+  }
+
+  private showError(): void {
+    document.getElementById(`${this.businessType}-loader`)?.classList.add('hidden');
+    document.getElementById(`${this.businessType}-content`)?.classList.add('hidden');
+    document.getElementById(`${this.businessType}-error`)?.classList.remove('hidden');
+  }
+
+  private showNotification(message: string, type: 'success' | 'error'): void {
+    const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+    const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle';
+    
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 ${bgColor} text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center gap-3`;
+    notification.innerHTML = `
+      <i class="fas ${icon}"></i>
+      <span>${message}</span>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+      notification.remove();
+    }, 3000);
+    
+    // Add click to dismiss
+    notification.addEventListener('click', () => {
+      notification.remove();
+    });
+  }
+
+  private async loadDataTablesScripts(): Promise<void> {
+    const scriptsToLoad = [
+      'https://code.jquery.com/jquery-3.6.0.min.js',
+      'https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js',
+      'https://cdn.datatables.net/1.13.5/css/dataTables.bootstrap5.min.css',
+      'https://cdn.datatables.net/responsive/2.4.1/js/dataTables.responsive.min.js'
+    ];
+
+    for (const src of scriptsToLoad) {
+      await new Promise<void>((resolve, reject) => {
+        const existingScript = document.querySelector(`script[src="${src}"], link[href="${src}"]`);
+        if (existingScript) {
+          resolve();
+          return;
+        }
+
+        const isCSS = src.includes('.css');
+        const element = isCSS ? document.createElement('link') : document.createElement('script');
+        
+        if (isCSS) {
+          const link = element as HTMLLinkElement;
+          link.rel = 'stylesheet';
+          link.href = src;
+        } else {
+          const script = element as HTMLScriptElement;
+          script.src = src;
+        }
+
+        element.onload = () => resolve();
+        element.onerror = () => reject(new Error(`Failed to load ${src}`));
+        
+        document.head.appendChild(element);
+      });
+    }
+  }
+}
+
+// Global instances
+let pokdarwisManager: BusinessManager;
+let bumdesManager: BusinessManager;
+
+// Initialize based on current page
+document.addEventListener('DOMContentLoaded', () => {
+  const currentPath = window.location.pathname;
+  
+  if (currentPath.includes('/pokdarwis')) {
+    pokdarwisManager = new BusinessManager('pokdarwis');
+    pokdarwisManager.initialize();
+    
+    // Expose to global scope for HTML onclick handlers
+    (window as any).businessManager = pokdarwisManager;
+  } else if (currentPath.includes('/bumdes')) {
+    bumdesManager = new BusinessManager('bumdes');
+    bumdesManager.initialize();
+    
+    // Expose to global scope for HTML onclick handlers
+    (window as any).businessManager = bumdesManager;
+  }
+});
+
+// Export for external use
+export { BusinessManager }; -->

@@ -1,0 +1,892 @@
+---
+const { userData } = Astro.props;
+---
+
+<!-- Edit Profile Modal -->
+<div id="editProfileModal" class="hidden fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50">
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
+    <!-- Modal Header -->
+    <div class="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-700">
+      <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
+        <i class="fas fa-edit mr-2 text-blue-600"></i>
+        Edit Profile Admin
+      </h3>
+      <button onclick="EditProfileModal.close()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+        <i class="fas fa-times text-xl"></i>
+      </button>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+      <form id="editProfileForm" class="space-y-6">
+        
+        <!-- Photo Section -->
+        <div class="text-center mb-6">
+          <div class="relative inline-block">
+            <div id="modalProfileImageContainer" class="w-24 h-24 rounded-full mx-auto bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white text-2xl font-bold">
+              <!-- Will be populated with initials or image -->
+            </div>
+            <label for="photoUpload" class="absolute bottom-0 right-0 bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center cursor-pointer hover:bg-blue-700 transition-colors">
+              <i class="fas fa-camera text-xs"></i>
+            </label>
+            <input type="file" id="photoUpload" class="hidden" accept="image/*">
+          </div>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Klik ikon kamera untuk mengubah foto</p>
+        </div>
+
+        <!-- Personal Information -->
+        <div class="grid md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Nama Lengkap <span class="text-red-500">*</span>
+            </label>
+            <input type="text" 
+                   id="modalFullName" 
+                   class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+                   required>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Email <span class="text-red-500">*</span>
+            </label>
+            <input type="email" 
+                   id="modalEmail" 
+                   class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+                   required>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Role
+            </label>
+            <input type="text" 
+                   id="modalRole" 
+                   class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-600 text-gray-500 dark:text-gray-400"
+                   readonly>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Tanggal Bergabung
+            </label>
+            <input type="text" 
+                   id="modalJoinDate" 
+                   class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-600 text-gray-500 dark:text-gray-400"
+                   readonly>
+          </div>
+        </div>
+
+
+
+        <!-- Security Settings (Password only) -->
+        <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
+          <h4 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
+            <i class="fas fa-shield-alt mr-2 text-green-600"></i>
+            Pengaturan Keamanan
+          </h4>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Ubah Password
+            </label>
+            <button type="button" onclick="ChangePasswordModal.open()" class="px-4 py-2 bg-red-100 text-red-800 rounded-lg hover:bg-red-200 transition-colors text-sm font-medium cursor-pointer">
+              <i class="fas fa-key mr-2"></i>
+              Ganti Password
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+   <!-- Modal Footer -->
+   <div class="flex justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+      <button type="button" onclick="EditProfileModal.close()" 
+          class="px-4 py-2 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg 
+              hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+          <i class="fas fa-times mr-2"></i>
+          Batal
+      </button>
+      <button type="button" id="saveProfileBtn" onclick="EditProfileModal.save()" 
+          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+          <i class="fas fa-save mr-2"></i>
+          Simpan Perubahan
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Change Password Modal -->
+<div id="changePasswordModal" class="hidden fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50">
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md">
+    <!-- Header -->
+    <div class="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-700">
+      <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
+        <i class="fas fa-key mr-2 text-red-600"></i>
+        Ganti Password
+      </h3>
+        <button onclick="ChangePasswordModal.close()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors cursor-pointer">
+        <i class="fas fa-times text-xl"></i>
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="p-6">
+      <form id="changePasswordForm" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Password Lama <span class="text-red-500">*</span>
+          </label>
+          <input type="password" id="currentPassword" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100" required>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Password Baru <span class="text-red-500">*</span>
+          </label>
+          <input type="password" id="newPassword" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100" required>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Minimal 8 karakter, kombinasi huruf dan angka</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Konfirmasi Password Baru <span class="text-red-500">*</span>
+          </label>
+          <input type="password" id="confirmPassword" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100" required>
+        </div>
+      </form>
+    </div>
+
+    <!-- Footer -->
+    <div class="flex justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+      <button type="button" onclick="ChangePasswordModal.close()" class="px-4 py-2 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <i class="fas fa-times mr-2"></i>
+        Batal
+      </button>
+      <button type="button" id="changePasswordBtn" onclick="ChangePasswordModal.save()" 
+          class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors cursor-pointer">
+         <i class="fas fa-key mr-2"></i>
+        Ganti Password
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Type definitions
+  type UserRole = 'admin' | 'pemdas' | 'bumdes' | 'pokdarwis';
+  
+  interface ProfileData {
+    id: string;
+    name: string;
+    email: string;
+    role: UserRole;
+    created_at: string;
+    permissions?: string[];
+  }
+
+  interface APIResponse {
+    success: boolean;
+    message?: string;
+    data: ProfileData;
+  }
+
+  // API Configuration
+  const PROFILE_API_ENDPOINT = 'https://pengmas.hipmi-tup.com/dashboard/profile';
+  
+  // Utility functions
+  function getElementById<T extends HTMLElement>(id: string): T | null {
+    return document.getElementById(id) as T | null;
+  }
+
+  function getInputValue(id: string): string {
+    const element = getElementById<HTMLInputElement>(id);
+    return element?.value || '';
+  }
+
+  function setInputValue(id: string, value: string): boolean {
+    const element = getElementById<HTMLInputElement>(id);
+    if (element) {
+      element.value = value;
+      return true;
+    }
+    return false;
+  }
+
+  function getCheckboxValue(id: string): boolean {
+    const element = getElementById<HTMLInputElement>(id);
+    return element?.checked || false;
+  }
+
+  function setCheckboxValue(id: string, checked: boolean): boolean {
+    const element = getElementById<HTMLInputElement>(id);
+    if (element) {
+      element.checked = checked;
+      return true;
+    }
+    return false;
+  }
+
+  function setTextContent(id: string, text: string): boolean {
+    const element = getElementById(id);
+    if (element) {
+      element.textContent = text;
+      return true;
+    }
+    return false;
+  }
+
+  function showNotification(message: string, type: 'success' | 'error' | 'warning' = 'success'): void {
+    const colors = {
+      success: 'bg-green-500',
+      error: 'bg-red-500',
+      warning: 'bg-yellow-500'
+    };
+
+    const icons = {
+      success: 'fa-check-circle',
+      error: 'fa-exclamation-triangle',
+      warning: 'fa-exclamation-triangle'
+    };
+
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 ${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg z-50 transition-all duration-300`;
+    notification.innerHTML = `
+      <div class="flex items-center">
+        <i class="fas ${icons[type]} mr-2"></i>
+        ${message}
+      </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.style.opacity = '0';
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+          notification.parentNode?.removeChild(notification);
+        }, 300);
+      }
+    }, 3000);
+  }
+
+  function getAuthToken(): string {
+    // Try different token sources in order of preference
+    const tokenSources = [
+      // Try common localStorage keys first
+      localStorage.getItem('token'),
+      localStorage.getItem('auth_token'),
+      localStorage.getItem('access_token'),
+      localStorage.getItem('jwt_token'),
+      localStorage.getItem('authToken'),
+      localStorage.getItem('accessToken'),
+      
+      // Try sessionStorage
+      sessionStorage.getItem('token'),
+      sessionStorage.getItem('auth_token'),
+      sessionStorage.getItem('access_token'),
+      sessionStorage.getItem('authToken'),
+      
+      // Try cookies
+      getCookie('token'),
+      getCookie('auth_token'),
+      getCookie('access_token'),
+      getCookie('authToken')
+    ];
+    
+    const token = tokenSources.find(token => token && token.trim() !== '' && token !== 'null' && token !== 'undefined');
+    
+    if (!token) {
+      console.warn('No authentication token found. Available localStorage keys:', Object.keys(localStorage));
+      console.warn('Available sessionStorage keys:', Object.keys(sessionStorage));
+      console.warn('Available cookies:', document.cookie);
+    }
+    
+    return token || '';
+  }
+  
+  function getCookie(name: string): string {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) {
+      return parts.pop()?.split(';').shift() || '';
+    }
+    return '';
+  }
+
+  function getRoleDisplayName(role: UserRole): string {
+    const roleMap: Record<UserRole, string> = {
+      admin: 'Administrator',
+      pemdas: 'Pemdes',
+      bumdes: 'BUMDes',
+      pokdarwis: 'Pokdarwis',
+    };
+    return roleMap[role] || role;
+  }
+
+  function formatDate(dateString: string): string {
+    const options: Intl.DateTimeFormatOptions = {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    };
+    return new Date(dateString).toLocaleDateString('id-ID', options);
+  }
+
+  function getInitials(name: string): string {
+    return name
+      .split(' ')
+      .map(word => word.charAt(0))
+      .join('')
+      .substring(0, 2)
+      .toUpperCase();
+  }
+
+  function generateAvatarColors(name: string): { from: string; to: string } {
+    const colors = [
+      { from: 'from-blue-500', to: 'to-blue-600' },
+      { from: 'from-purple-500', to: 'to-purple-600' },
+      { from: 'from-green-500', to: 'to-green-600' },
+      { from: 'from-red-500', to: 'to-red-600' },
+      { from: 'from-yellow-500', to: 'to-yellow-600' },
+      { from: 'from-indigo-500', to: 'to-indigo-600' },
+      { from: 'from-pink-500', to: 'to-pink-600' },
+      { from: 'from-teal-500', to: 'to-teal-600' }
+    ];
+    
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % colors.length;
+    return colors[index];
+  }
+
+  // Main Profile Modal Object
+  const EditProfileModal = {
+    currentProfileData: null as ProfileData | null,
+
+    async open(): Promise<void> {
+      const modal = getElementById('editProfileModal');
+      if (modal) {
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        
+        // Debug: Log available tokens
+        console.log('=== Token Debug Info ===');
+        console.log('localStorage token:', localStorage.getItem('token'));
+        console.log('localStorage auth_token:', localStorage.getItem('auth_token'));
+        console.log('localStorage access_token:', localStorage.getItem('access_token'));
+        console.log('sessionStorage token:', sessionStorage.getItem('token'));
+        console.log('Document cookies:', document.cookie);
+        console.log('======================');
+        
+        // Load current profile data from API
+        await this.loadProfileData();
+        this.setupImagePreview();
+      }
+    },
+
+    close(): void {
+      const modal = getElementById('editProfileModal');
+      if (modal) {
+        modal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+      }
+    },
+
+    async loadProfileData(): Promise<void> {
+      try {
+        const token = getAuthToken();
+        
+        if (!token) {
+          showNotification('Token autentikasi tidak ditemukan. Silakan login kembali.', 'error');
+          // Redirect to login page or show login modal
+          setTimeout(() => {
+            window.location.href = '/login'; // Adjust this URL as needed
+          }, 2000);
+          return;
+        }
+
+        const headers: HeadersInit = {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`
+        };
+
+        const response = await fetch(`${PROFILE_API_ENDPOINT}/detail`, {
+          method: 'GET',
+          headers
+        });
+
+        if (response.status === 401) {
+          // Token expired or invalid
+          showNotification('Sesi Anda telah berakhir. Silakan login kembali.', 'error');
+          // Clear invalid tokens
+          localStorage.removeItem('token');
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('access_token');
+          sessionStorage.removeItem('token');
+          sessionStorage.removeItem('auth_token');
+          
+          setTimeout(() => {
+            window.location.href = '/login'; // Adjust this URL as needed
+          }, 2000);
+          return;
+        }
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          let errorMessage = `HTTP error! status: ${response.status}`;
+          
+          try {
+            const errorJson = JSON.parse(errorText);
+            errorMessage = errorJson.message || errorMessage;
+          } catch {
+            // Keep the default error message
+          }
+          
+          throw new Error(errorMessage);
+        }
+
+        const result: APIResponse = await response.json();
+        
+        if (result.success && result.data) {
+          this.currentProfileData = result.data;
+          this.populateForm(result.data);
+        } else {
+          throw new Error(result.message || 'Failed to fetch profile data');
+        }
+      } catch (error) {
+        console.error('Error loading profile data:', error);
+        
+        if (error instanceof Error) {
+          if (error.message.includes('401')) {
+            showNotification('Sesi Anda telah berakhir. Silakan login kembali.', 'error');
+          } else if (error.message.includes('403')) {
+            showNotification('Anda tidak memiliki izin untuk mengakses data profil.', 'error');
+          } else if (error.message.includes('404')) {
+            showNotification('Data profil tidak ditemukan.', 'error');
+          } else if (error.message.includes('500')) {
+            showNotification('Terjadi kesalahan server. Coba lagi nanti.', 'error');
+          } else {
+            showNotification('Gagal memuat data profil: ' + error.message, 'error');
+          }
+        } else {
+          showNotification('Gagal memuat data profil', 'error');
+        }
+      }
+    },
+
+    populateForm(data: ProfileData): void {
+      // Set form values
+      setInputValue('modalFullName', data.name || '');
+      setInputValue('modalEmail', data.email || '');
+      setInputValue('modalRole', getRoleDisplayName(data.role));
+      setInputValue('modalJoinDate', formatDate(data.created_at));
+
+      // Update avatar with initials
+      const avatarContainer = getElementById('modalProfileImageContainer');
+      if (avatarContainer && data.name) {
+        const initials = getInitials(data.name);
+        const colors = generateAvatarColors(data.name);
+        
+        avatarContainer.className = `w-24 h-24 rounded-full mx-auto bg-gradient-to-br ${colors.from} ${colors.to} flex items-center justify-center text-white text-2xl font-bold`;
+        avatarContainer.textContent = initials;
+      }
+    },
+
+    setupImagePreview(): void {
+      const fileInput = getElementById<HTMLInputElement>('photoUpload');
+      const avatarContainer = getElementById('modalProfileImageContainer');
+      
+      if (fileInput && avatarContainer) {
+        fileInput.addEventListener('change', (event) => {
+          const target = event.target as HTMLInputElement;
+          const file = target.files?.[0];
+          
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              const result = e.target?.result as string;
+              if (result && avatarContainer) {
+                avatarContainer.innerHTML = `<img src="${result}" alt="Profile" class="w-full h-full rounded-full object-cover">`;
+              }
+            };
+            reader.readAsDataURL(file);
+          }
+        });
+      }
+    },
+
+    validateForm(): { isValid: boolean; errors: string[] } {
+      const errors: string[] = [];
+      const email = getInputValue('modalEmail');
+      const fullName = getInputValue('modalFullName');
+
+      if (!fullName.trim()) errors.push('Nama lengkap wajib diisi');
+      if (!email.trim()) {
+        errors.push('Email wajib diisi');
+      } else if (!/\S+@\S+\.\S+/.test(email)) {
+        errors.push('Format email tidak valid');
+      }
+
+      return {
+        isValid: errors.length === 0,
+        errors
+      };
+    },
+
+    getFormData(): Partial<ProfileData> {
+      return {
+        name: getInputValue('modalFullName'),
+        email: getInputValue('modalEmail'),
+      };
+    },
+
+    async save(): Promise<void> {
+      const validation = this.validateForm();
+
+      if (!validation.isValid) {
+        showNotification(validation.errors.join(', '), 'error');
+        return;
+      }
+
+      // Button loading state
+      const saveBtn = getElementById<HTMLButtonElement>('saveProfileBtn');
+      if (!saveBtn) return;
+
+      const originalText = saveBtn.innerHTML;
+      saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Menyimpan...';
+      saveBtn.disabled = true;
+
+      try {
+        const formData = this.getFormData();
+        const token = getAuthToken();
+        
+        const headers: HeadersInit = {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        };
+        
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        // Try different HTTP methods for the same endpoint
+        const methods = ['POST', 'PUT', 'PATCH'];
+        let response: Response | null = null;
+        let lastError: Error | null = null;
+
+        // Try each method until one works
+        for (const method of methods) {
+          try {
+            response = await fetch(PROFILE_API_ENDPOINT, {
+              method,
+              headers,
+              body: JSON.stringify(formData)
+            });
+
+            if (response.ok) {
+              break; // Success, exit loop
+            } else if (response.status !== 405) {
+              // If it's not a method not allowed error, break and handle it
+              break;
+            }
+          } catch (error) {
+            lastError = error instanceof Error ? error : new Error('Unknown error');
+            continue; // Try next method
+          }
+        }
+
+        if (!response) {
+          throw lastError || new Error('Unable to connect to server');
+        }
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          let errorMessage = `HTTP error! status: ${response.status}`;
+          
+          try {
+            const errorJson = JSON.parse(errorText);
+            errorMessage = errorJson.message || errorMessage;
+          } catch {
+            // Keep the default error message
+          }
+          
+          throw new Error(errorMessage);
+        }
+
+        const result: APIResponse = await response.json();
+        
+        if (result.success) {
+          // Update the main profile page with new data
+          this.updateMainProfilePage(formData);
+          
+          showNotification('Profil berhasil diperbarui!', 'success');
+          this.close();
+          
+          // Trigger a refresh of the main profile data
+          if (window.fetchProfileData) {
+            window.fetchProfileData();
+          }
+        } else {
+          throw new Error(result.message || 'Failed to update profile');
+        }
+      } catch (error) {
+        console.error('Error saving profile:', error);
+        let errorMessage = 'Terjadi kesalahan saat menyimpan profil';
+        
+        if (error instanceof Error) {
+          if (error.message.includes('405')) {
+            errorMessage = 'Metode tidak diizinkan. Silakan hubungi administrator.';
+          } else if (error.message.includes('401')) {
+            errorMessage = 'Sesi Anda telah berakhir. Silakan login kembali.';
+          } else if (error.message.includes('403')) {
+            errorMessage = 'Anda tidak memiliki izin untuk mengubah profil.';
+          } else if (error.message.includes('404')) {
+            errorMessage = 'Endpoint tidak ditemukan. Silakan hubungi administrator.';
+          } else if (error.message.includes('422')) {
+            errorMessage = 'Data yang dikirim tidak valid. Periksa kembali form Anda.';
+          } else if (error.message.includes('500')) {
+            errorMessage = 'Terjadi kesalahan server. Coba lagi nanti.';
+          } else {
+            errorMessage = error.message;
+          }
+        }
+        
+        showNotification(errorMessage, 'error');
+      } finally {
+        saveBtn.innerHTML = originalText;
+        saveBtn.disabled = false;
+      }
+    },
+
+    updateMainProfilePage(data: Partial<ProfileData>): void {
+      // Update main page elements if they exist
+      if (data.name) {
+        setTextContent('profile-name', data.name);
+        setTextContent('mainProfileName', data.name);
+      }
+      if (data.email) {
+        setTextContent('profile-email', data.email);
+      }
+    }
+  };
+
+  // Change Password Modal Object
+  const ChangePasswordModal = {
+    open(): void {
+      const modal = getElementById('changePasswordModal');
+      if (modal) {
+        modal.classList.remove('hidden');
+      }
+    },
+
+    close(): void {
+      const modal = getElementById('changePasswordModal');
+      const form = getElementById<HTMLFormElement>('changePasswordForm');
+      
+      if (modal) {
+        modal.classList.add('hidden');
+      }
+      if (form) {
+        form.reset();
+      }
+    },
+
+    validatePasswords(): { isValid: boolean; errors: string[] } {
+      const errors: string[] = [];
+      const currentPassword = getInputValue('currentPassword');
+      const newPassword = getInputValue('newPassword');
+      const confirmPassword = getInputValue('confirmPassword');
+
+      if (!currentPassword) errors.push('Password lama wajib diisi');
+      if (!newPassword) errors.push('Password baru wajib diisi');
+      if (!confirmPassword) errors.push('Konfirmasi password wajib diisi');
+
+      if (newPassword && newPassword.length < 8) {
+        errors.push('Password baru minimal 8 karakter');
+      }
+
+      if (newPassword && confirmPassword && newPassword !== confirmPassword) {
+        errors.push('Konfirmasi password tidak cocok');
+      }
+
+      return {
+        isValid: errors.length === 0,
+        errors
+      };
+    },
+
+    async save(): Promise<void> {
+      const validation = this.validatePasswords();
+
+      if (!validation.isValid) {
+        showNotification(validation.errors.join(', '), 'error');
+        return;
+      }
+
+      const changeButton = getElementById<HTMLButtonElement>('changePasswordBtn');
+      if (!changeButton) return;
+
+      const originalText = changeButton.innerHTML;
+      changeButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Mengganti...';
+      changeButton.disabled = true;
+
+      try {
+        const token = getAuthToken();
+        
+        if (!token) {
+          showNotification('Token autentikasi tidak ditemukan. Silakan login kembali.', 'error');
+          return;
+        }
+
+        const headers: HeadersInit = {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`
+        };
+
+        const passwordData = {
+          old_password: getInputValue('currentPassword'), // Try different field names
+          password: getInputValue('newPassword'),
+          password_confirmation: getInputValue('confirmPassword')
+        };
+
+        console.log('=== Change Password Request ===');
+        console.log('Endpoint:', PROFILE_API_ENDPOINT);
+        console.log('Data:', passwordData);
+        console.log('Headers:', headers);
+        console.log('===============================');
+
+        // Try the main endpoint first
+        let response = await fetch(PROFILE_API_ENDPOINT, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            ...passwordData,
+            action: 'change-password'
+          })
+        });
+
+        // If 404, try without action field
+        if (response.status === 404) {
+          response = await fetch(PROFILE_API_ENDPOINT, {
+            method: 'PUT', // Try PUT method
+            headers,
+            body: JSON.stringify(passwordData)
+          });
+        }
+
+        // If still 404, try PATCH method  
+        if (response.status === 404) {
+          response = await fetch(PROFILE_API_ENDPOINT, {
+            method: 'PATCH',
+            headers,
+            body: JSON.stringify(passwordData)
+          });
+        }
+
+        if (response.status === 401) {
+          showNotification('Sesi Anda telah berakhir. Silakan login kembali.', 'error');
+          setTimeout(() => {
+            window.location.href = '/login';
+          }, 2000);
+          return;
+        }
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          let errorMessage = `HTTP error! status: ${response.status}`;
+          
+          try {
+            const errorJson = JSON.parse(errorText);
+            errorMessage = errorJson.message || errorMessage;
+          } catch {
+            // Keep the default error message
+          }
+          
+          throw new Error(errorMessage);
+        }
+
+        const result = await response.json();
+        
+        if (result.success) {
+          showNotification('Password berhasil diubah!', 'success');
+          this.close();
+        } else {
+          throw new Error(result.message || 'Failed to change password');
+        }
+      } catch (error) {
+        console.error('Error changing password:', error);
+        let errorMessage = 'Terjadi kesalahan saat mengubah password';
+        
+        if (error instanceof Error) {
+          if (error.message.includes('401')) {
+            errorMessage = 'Sesi Anda telah berakhir. Silakan login kembali.';
+          } else if (error.message.includes('403')) {
+            errorMessage = 'Anda tidak memiliki izin untuk mengubah password.';
+          } else if (error.message.includes('404')) {
+            errorMessage = 'Endpoint untuk mengubah password tidak ditemukan.';
+          } else if (error.message.includes('422')) {
+            errorMessage = 'Password lama tidak sesuai atau password baru tidak valid.';
+          } else if (error.message.includes('500')) {
+            errorMessage = 'Terjadi kesalahan server. Coba lagi nanti.';
+          } else {
+            errorMessage = error.message;
+          }
+        }
+        
+        showNotification(errorMessage, 'error');
+      } finally {
+        changeButton.innerHTML = originalText;
+        changeButton.disabled = false;
+      }
+    }
+  };
+
+  // Setup modal event listeners
+  function setupModalEvents(): void {
+    const editModal = getElementById('editProfileModal');
+    const passwordModal = getElementById('changePasswordModal');
+
+    editModal?.addEventListener('click', (e) => {
+      if (e.target === editModal) EditProfileModal.close();
+    });
+
+    passwordModal?.addEventListener('click', (e) => {
+      if (e.target === passwordModal) ChangePasswordModal.close();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        if (editModal && !editModal.classList.contains('hidden')) {
+          EditProfileModal.close();
+        }
+        if (passwordModal && !passwordModal.classList.contains('hidden')) {
+          ChangePasswordModal.close();
+        }
+      }
+    });
+
+    // Phone input validation - REMOVED since phone field is no longer needed
+  }
+
+  // Initialize when DOM is loaded
+  document.addEventListener('DOMContentLoaded', () => {
+    setupModalEvents();
+  });
+
+  // Global declarations for TypeScript
+  declare global {
+    interface Window {
+      EditProfileModal: typeof EditProfileModal;
+      ChangePasswordModal: typeof ChangePasswordModal;
+      fetchProfileData?: () => Promise<void>;
+    }
+  }
+
+  // Make objects globally available
+  window.EditProfileModal = EditProfileModal;
+  window.ChangePasswordModal = ChangePasswordModal;

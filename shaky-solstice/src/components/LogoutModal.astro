@@ -1,0 +1,100 @@
+---
+export interface Props {
+  logoutUrl?: string;
+}
+
+const { logoutUrl = "https://pengmas.hipmi-tup.com/logout" } = Astro.props;
+---
+
+<div
+  id="logoutModal"
+  data-logout-url={logoutUrl}
+  class="fixed inset-0 flex items-center justify-center hidden z-50 backdrop-blur-sm bg-black/20"
+>
+  <div class="bg-white dark:bg-gray-800 rounded-xl p-6 w-80 shadow-xl border border-gray-200 dark:border-gray-700">
+    <h2 class="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">Konfirmasi Logout</h2>
+    <p class="mb-6 text-gray-600 dark:text-gray-300">Apakah kamu yakin ingin logout?</p>
+    <div class="flex justify-end gap-3">
+      <button
+        onclick="closeLogoutModal()"
+        class="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+      >
+        Batal
+      </button>
+      <button
+        id="logoutConfirmBtn"
+        class="px-4 py-2 rounded-lg text-white bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transition disabled:opacity-50"
+      >
+        <span class="logout-text">Logout</span>
+        <span class="logout-loading hidden">Logging out...</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const modal = document.getElementById("logoutModal");
+  const logoutUrlValue = modal?.dataset.logoutUrl ?? "https://pengmas.hipmi-tup.com/logout";
+  console.log("Logout URL:", logoutUrlValue);
+  
+
+  function showLogoutModal() {
+    modal?.classList.remove("hidden");
+  }
+
+  function closeLogoutModal() {
+    modal?.classList.add("hidden");
+  }
+
+  
+    function getAuthToken(): string {
+      const tokenSources = [
+        localStorage.getItem('auth_token'),
+        localStorage.getItem('access_token'),
+        localStorage.getItem('token'),
+        localStorage.getItem('jwt_token'),
+        sessionStorage.getItem('auth_token'),
+        sessionStorage.getItem('access_token'),
+      ];
+      
+      return tokenSources.find(token => token && token.trim() !== '') || '';
+    }
+
+async function proceedLogout() {
+  const logoutBtn = document.getElementById("logoutConfirmBtn") as HTMLButtonElement; 
+  const textSpan = logoutBtn?.querySelector(".logout-text");
+  const loadingSpan = logoutBtn?.querySelector(".logout-loading");
+  
+  try {
+    if (logoutBtn && textSpan && loadingSpan) {
+      logoutBtn.disabled = true;
+      textSpan.classList.add("hidden");
+      loadingSpan.classList.remove("hidden");
+    }
+
+    await fetch(logoutUrlValue, {
+      method: 'POST',
+      credentials: 'include', 
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${getAuthToken()}`,
+      }
+    });
+
+    localStorage.clear();
+    sessionStorage.clear();
+
+    window.location.replace('/login');
+    
+  } catch (error) {
+    console.error('Logout error:', error);
+    window.location.replace('/login');
+  }
+}
+
+  const logoutBtn = document.getElementById("logoutConfirmBtn");
+  logoutBtn?.addEventListener("click", proceedLogout);
+
+  window.showLogoutModal = showLogoutModal;
+  window.closeLogoutModal = closeLogoutModal;
+</script>

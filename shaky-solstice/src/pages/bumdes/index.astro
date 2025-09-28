@@ -1,0 +1,967 @@
+---
+// src/pages/admin/bumdes.astro
+import DataTableComponent from "../../components/DataTable.astro";
+import AdminLayout from "../../layouts/AdminLayout.astro";
+
+// Data contoh
+const usahaList = [
+  { id: "1", name: "Warung Desa", periode: "Harian" },
+  { id: "2", name: "Sewa Tenda", periode: "Mingguan" },
+  { id: "3", name: "Simpan Pinjam", periode: "Bulanan" },
+  { id: "4", name: "Toko Sembako", periode: "Harian" },
+  { id: "5", name: "Rental Mobil", periode: "Harian" }
+];
+---
+
+<AdminLayout title="BUMDes Dashboard">
+  <!-- Load Font Awesome first -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Panggil DataTable Component -->
+  <DataTableComponent
+    title="BUMDes"
+    color="blue"
+    icon="fas fa-building"
+    usahaList={usahaList}
+    type="bumdes"
+  />
+</AdminLayout>
+
+<!-- Load scripts in correct order -->
+<script is:inline>
+  // Wait for DOM and Font Awesome to load
+  document.addEventListener('DOMContentLoaded', function() {
+    // Check if Font Awesome is loaded, if not load it
+    if (!document.querySelector('link[href*="font-awesome"]')) {
+      const fontAwesome = document.createElement('link');
+      fontAwesome.rel = 'stylesheet';
+      fontAwesome.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
+      fontAwesome.integrity = 'sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==';
+      fontAwesome.crossOrigin = 'anonymous';
+      fontAwesome.referrerPolicy = 'no-referrer';
+      document.head.appendChild(fontAwesome);
+    }
+
+    // Small delay to ensure Font Awesome is loaded
+    setTimeout(() => {
+      initializeScripts();
+    }, 100);
+  });
+
+  function initializeScripts() {
+    // First, load jQuery
+    if (typeof jQuery === 'undefined') {
+      const jqueryScript = document.createElement('script');
+      jqueryScript.src = 'https://code.jquery.com/jquery-3.6.0.min.js';
+      jqueryScript.onload = function() {
+        loadDataTablesScripts();
+      };
+      document.head.appendChild(jqueryScript);
+    } else {
+      loadDataTablesScripts();
+    }
+  }
+
+  function loadDataTablesScripts() {
+    const scripts = [
+      'https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js',
+      'https://cdn.datatables.net/responsive/2.4.1/js/dataTables.responsive.min.js',
+      'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js',
+      'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/pdfmake.min.js',
+      'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js',
+      'https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js',
+      'https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js',
+      'https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js'
+    ];
+
+    function loadScript(src) {
+      return new Promise(function(resolve, reject) {
+        const script = document.createElement('script');
+        script.src = src;
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+    }
+
+    // Load scripts sequentially
+    function loadAllScripts() {
+      let promise = Promise.resolve();
+      
+      scripts.forEach(function(src) {
+        promise = promise.then(function() {
+          console.log('Loading: ' + src);
+          return loadScript(src);
+        }).then(function() {
+          console.log('Loaded: ' + src);
+        });
+      });
+      
+      promise.then(function() {
+        console.log('All DataTables scripts loaded successfully');
+        // Initialize DataTable after scripts are loaded
+        initializeDataTableWithDummy();
+      }).catch(function(error) {
+        console.error('Error loading DataTables scripts:', error);
+      });
+    }
+
+    loadAllScripts();
+  }
+
+  // Initialize DataTable with dummy data
+  async function initializeDataTableWithDummy() {
+    // Generate dummy data
+    const dummyData = generateDummyData();
+    
+    // Initialize DataTable
+    await fetch("/columns")
+      .then(response => response.json())
+      .then(columns => {
+        const table = $('#bumdes_table').DataTable({
+      data: dummyData,
+      responsive: true,
+      pageLength: 10,
+      lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+      dom: '<"modern-datatable-header"<"search-container"f><"length-container"l>>rtip',
+      buttons: [
+        { 
+          extend: 'excel', 
+          className: 'btn btn-success btn-sm',
+          text: '<i class="fas fa-file-excel me-1"></i> Export Excel'
+        },
+        { 
+          extend: 'print', 
+          className: 'btn btn-info btn-sm',
+          text: '<i class="fas fa-print me-1"></i> Print'
+        }
+      ],
+      columns: columns.data || [],
+      language: {
+        url: "https://cdn.datatables.net/plug-ins/1.13.5/i18n/id.json",
+        searchPlaceholder: "Cari transaksi...",
+        search: "",
+        lengthMenu: "Tampilkan _MENU_ data",
+        info: "Menampilkan _START_ - _END_ dari _TOTAL_ transaksi",
+        infoEmpty: "Tidak ada data",
+        infoFiltered: "(difilter dari _MAX_ total)",
+        paginate: {
+          first: "Awal",
+          last: "Akhir", 
+          next: "Berikutnya",
+          previous: "Sebelumnya"
+        }
+      },
+      order: [[0, 'desc']], // Default order by date descending
+      drawCallback: function() {
+        // Update summary cards after table is drawn
+        updateSummaryCards(this.api().data().toArray());
+      }
+    });
+      })
+      .catch(error => {
+        console.error('Error fetching columns:', error);
+      });
+
+
+    const table = $('#bumdes_table').DataTable({
+      data: dummyData,
+      responsive: true,
+      pageLength: 10,
+      lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+      dom: '<"modern-datatable-header"<"search-container"f><"length-container"l>>rtip',
+      buttons: [
+        { 
+          extend: 'excel', 
+          className: 'btn btn-success btn-sm',
+          text: '<i class="fas fa-file-excel me-1"></i> Export Excel'
+        },
+        { 
+          extend: 'print', 
+          className: 'btn btn-info btn-sm',
+          text: '<i class="fas fa-print me-1"></i> Print'
+        }
+      ],
+      columns: [
+        { 
+          data: 'tanggal',
+          title: 'Tanggal',
+          className: 'text-center'
+        },
+        { 
+          data: 'hari',
+          title: 'Hari',
+          className: 'text-center'
+        },
+        { 
+          data: 'jenisUsaha',
+          title: 'Jenis Usaha',
+          className: 'text-center'
+        },
+        { 
+          data: 'uangMasuk',
+          title: 'Uang Masuk',
+          className: 'text-end',
+          render: function(data, type, row) {
+            if (type === 'display' || type === 'type') {
+              return data > 0 ? `<span class="text-green-600 fw-bold">${formatCurrency(data)}</span>` : '<span class="text-muted">-</span>';
+            }
+            return data;
+          }
+        },
+        { 
+          data: 'uangKeluar',
+          title: 'Uang Keluar',
+          className: 'text-end',
+          render: function(data, type, row) {
+            if (type === 'display' || type === 'type') {
+              return data > 0 ? `<span class="text-red-600 fw-bold">${formatCurrency(data)}</span>` : '<span class="text-muted">-</span>';
+            }
+            return data;
+          }
+        },
+        { 
+          data: 'netTotal',
+          title: 'Net Total',
+          className: 'text-end',
+          render: function(data, type, row) {
+            if (type === 'display' || type === 'type') {
+              const color = data >= 0 ? 'text-green-600' : 'text-red-600';
+              return `<span class="${color} fw-bold">${formatCurrency(data)}</span>`;
+            }
+            return data;
+          }
+        },
+        { 
+          data: 'keterangan',
+          title: 'Keterangan',
+          className: 'text-start'
+        },
+        {
+          data: null,
+          title: 'Action',
+          className: 'text-center',
+          orderable: false,
+          render: function(data, type, row) {
+            return `
+              <div class="btn-group" role="group">
+                <button onclick="editTransaction(${row.id})" 
+                        class="btn btn-outline-primary btn-sm" 
+                        title="Edit Transaksi">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button onclick="deleteTransaction(${row.id})" 
+                        class="btn btn-outline-danger btn-sm" 
+                        title="Hapus Transaksi">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            `;
+          }
+        }
+      ],
+      language: {
+        url: "https://cdn.datatables.net/plug-ins/1.13.5/i18n/id.json",
+        searchPlaceholder: "Cari transaksi...",
+        search: "",
+        lengthMenu: "Tampilkan _MENU_ data",
+        info: "Menampilkan _START_ - _END_ dari _TOTAL_ transaksi",
+        infoEmpty: "Tidak ada data",
+        infoFiltered: "(difilter dari _MAX_ total)",
+        paginate: {
+          first: "Awal",
+          last: "Akhir", 
+          next: "Berikutnya",
+          previous: "Sebelumnya"
+        }
+      },
+      order: [[0, 'desc']], // Default order by date descending
+      drawCallback: function() {
+        // Update summary cards after table is drawn
+        updateSummaryCards(this.api().data().toArray());
+      }
+    });
+
+    // Setup filters
+    setupFilters(table);
+    
+    // Setup modal handlers
+    setupModalHandlers();
+    
+    console.log('DataTable initialized with dummy data');
+  }
+
+  // Generate dummy data
+  function generateDummyData() {
+    const usaha = ['Warung Desa', 'Sewa Tenda', 'Simpan Pinjam', 'Toko Sembako', 'Rental Mobil'];
+    const keteranganMasuk = [
+      'Penjualan harian warung desa',
+      'Sewa tenda untuk acara pernikahan', 
+      'Setoran simpanan anggota',
+      'Penjualan sembako dan kebutuhan pokok',
+      'Rental mobil untuk acara desa',
+      'Penjualan makanan dan minuman',
+      'Sewa peralatan pesta',
+      'Bunga simpanan',
+      'Penjualan pupuk dan bibit',
+      'Jasa pengiriman barang'
+    ];
+    const keteranganKeluar = [
+      'Pembelian stok barang',
+      'Biaya operasional warung',
+      'Pencairan pinjaman anggota',
+      'Pembelian sembako untuk stok',
+      'Biaya perawatan kendaraan',
+      'Gaji karyawan',
+      'Biaya listrik dan air',
+      'Pembelian peralatan',
+      'Biaya administrasi',
+      'Biaya transportasi'
+    ];
+
+    const data = [];
+    const today = new Date();
+    
+    for (let i = 0; i < 50; i++) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      
+      const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+      const isIncome = Math.random() > 0.4; // 60% chance income, 40% expense
+      
+      const transaction = {
+        id: i + 1,
+        tanggal: date.toISOString().split('T')[0],
+        hari: dayNames[date.getDay()],
+        jenisUsaha: usaha[Math.floor(Math.random() * usaha.length)],
+        uangMasuk: isIncome ? Math.floor(Math.random() * 2000000) + 100000 : 0,
+        uangKeluar: !isIncome ? Math.floor(Math.random() * 1500000) + 50000 : 0,
+        netTotal: 0,
+        keterangan: isIncome ? 
+          keteranganMasuk[Math.floor(Math.random() * keteranganMasuk.length)] :
+          keteranganKeluar[Math.floor(Math.random() * keteranganKeluar.length)]
+      };
+      
+      transaction.netTotal = transaction.uangMasuk - transaction.uangKeluar;
+      data.push(transaction);
+    }
+    
+    return data;
+  }
+
+  // Setup filters
+  function setupFilters(table) {
+    // Filter by Usaha
+    $('#bumdes_filterUsaha').on('change', function() {
+      const val = this.value;
+      table.column(2).search(val ? '^' + val + '$' : '', true, false).draw();
+    });
+
+    // Filter by Status
+    $('#bumdes_filterStatus').on('change', function() {
+      const val = this.value;
+      if (val === 'masuk') {
+        table.column(3).search('.+', true, false).column(4).search('^0$', true, false);
+      } else if (val === 'keluar') {
+        table.column(3).search('^0$', true, false).column(4).search('.+', true, false);
+      } else {
+        table.column(3).search('').column(4).search('');
+      }
+      table.draw();
+    });
+
+    // Date range filter
+    $('#bumdes_dateFrom, #bumdes_dateTo').on('change', function() {
+      const dateFrom = $('#bumdes_dateFrom').val();
+      const dateTo = $('#bumdes_dateTo').val();
+      
+      $.fn.dataTable.ext.search.pop(); // Remove previous filter
+      
+      if (dateFrom || dateTo) {
+        $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+          const date = data[0]; // Date column
+          return (!dateFrom || date >= dateFrom) && (!dateTo || date <= dateTo);
+        });
+      }
+      
+      table.draw();
+    });
+  }
+
+  // Setup modal handlers
+  function setupModalHandlers() {
+    // Open modal
+    window.openModal = function(type) {
+      const modal = document.getElementById('transactionModal');
+      if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        
+        // Set today's date as default
+        const today = new Date().toISOString().split('T')[0];
+        const dateInput = document.getElementById('tanggalTransaksi');
+        if (dateInput) dateInput.value = today;
+      }
+    };
+
+    // Close modal
+    window.closeModal = function() {
+      const modal = document.getElementById('transactionModal');
+      const form = document.getElementById('transactionForm');
+      
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+      if (form) form.reset();
+    };
+
+    // Submit form
+    const form = document.getElementById('transactionForm');
+    if (form) {
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const data = {
+          jenisUsaha: document.getElementById('jenisUsaha')?.value,
+          tipeTransaksi: document.getElementById('tipeTransaksi')?.value,
+          nominal: parseInt(document.getElementById('nominal')?.value) || 0,
+          potongan: parseInt(document.getElementById('potongan')?.value) || 0,
+          tanggal: document.getElementById('tanggalTransaksi')?.value,
+          keterangan: document.getElementById('keterangan')?.value
+        };
+
+        console.log('Form submitted:', data);
+        
+        // Add to table (simulate)
+        const table = $('#bumdes_table').DataTable();
+        const newRow = {
+          id: Date.now(),
+          tanggal: data.tanggal,
+          hari: new Date(data.tanggal).toLocaleDateString('id-ID', { weekday: 'long' }),
+          jenisUsaha: document.querySelector(`#jenisUsaha option[value="${data.jenisUsaha}"]`)?.textContent || data.jenisUsaha,
+          uangMasuk: data.tipeTransaksi === 'masuk' ? data.nominal - data.potongan : 0,
+          uangKeluar: data.tipeTransaksi === 'keluar' ? data.nominal - data.potongan : 0,
+          netTotal: data.tipeTransaksi === 'masuk' ? data.nominal - data.potongan : -(data.nominal - data.potongan),
+          keterangan: data.keterangan || 'Transaksi ' + data.tipeTransaksi
+        };
+
+        table.row.add(newRow).draw();
+        
+        // Close modal
+        window.closeModal();
+        
+        // Show success message
+        alert('✅ Transaksi berhasil ditambahkan!');
+      });
+    }
+  }
+
+  // Update summary cards
+  function updateSummaryCards(data) {
+    let totalMasuk = 0;
+    let totalKeluar = 0;
+    
+    data.forEach(function(row) {
+      totalMasuk += row.uangMasuk || 0;
+      totalKeluar += row.uangKeluar || 0;
+    });
+    
+    const saldoAkhir = totalMasuk - totalKeluar;
+    
+    // Update DOM
+    const totalMasukEl = document.getElementById('bumdes_totalMasuk');
+    const totalKeluarEl = document.getElementById('bumdes_totalKeluar');
+    const saldoAkhirEl = document.getElementById('bumdes_saldoAkhir');
+    
+    if (totalMasukEl) totalMasukEl.textContent = formatCurrency(totalMasuk);
+    if (totalKeluarEl) totalKeluarEl.textContent = formatCurrency(totalKeluar);
+    if (saldoAkhirEl) {
+      saldoAkhirEl.textContent = formatCurrency(saldoAkhir);
+      saldoAkhirEl.className = `text-xl md:text-3xl font-bold truncate ${saldoAkhir >= 0 ? 'text-green-600' : 'text-red-600'}`;
+    }
+  }
+
+  // Utility functions
+  function formatCurrency(amount) {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount || 0);
+  }
+
+  // Action handlers
+  window.editTransaction = function(id) {
+    console.log('Edit transaction:', id);
+    alert('⚡ Fitur edit akan segera tersedia!');
+  };
+
+  window.deleteTransaction = function(id) {
+    if (confirm('⚠️ Apakah Anda yakin ingin menghapus transaksi ini?')) {
+      const table = $('#bumdes_table').DataTable();
+      table.row(function(idx, data) {
+        return data.id === id;
+      }).remove().draw();
+      
+      console.log('Transaction deleted:', id);
+      alert('🗑️ Transaksi berhasil dihapus!');
+    }
+  };
+
+  // Export functions
+  window.exportToExcel = function(type) {
+    const table = $('#' + type + '_table').DataTable();
+    table.button('.buttons-excel').trigger();
+  };
+
+  window.printReport = function(type) {
+    const table = $('#' + type + '_table').DataTable();
+    table.button('.buttons-print').trigger();
+  };
+
+  // Quick filters
+  window.resetFilters = function(type) {
+    const filterUsaha = document.getElementById(type + '_filterUsaha');
+    const dateFrom = document.getElementById(type + '_dateFrom');
+    const dateTo = document.getElementById(type + '_dateTo');
+    const filterPeriode = document.getElementById(type + '_filterPeriode');
+    const filterStatus = document.getElementById(type + '_filterStatus');
+    
+    if (filterUsaha) filterUsaha.value = '';
+    if (dateFrom) dateFrom.value = '';
+    if (dateTo) dateTo.value = '';
+    if (filterPeriode) filterPeriode.value = '';
+    if (filterStatus) filterStatus.value = '';
+    
+    const table = $('#' + type + '_table').DataTable();
+    table.search('').columns().search('').draw();
+    
+    // Clear custom search
+    if ($.fn.dataTable.ext.search.length > 0) {
+      $.fn.dataTable.ext.search.pop();
+    }
+  };
+
+  window.filterToday = function(type) {
+    const today = new Date().toISOString().split('T')[0];
+    const dateFrom = document.getElementById(type + '_dateFrom');
+    const dateTo = document.getElementById(type + '_dateTo');
+    
+    if (dateFrom) dateFrom.value = today;
+    if (dateTo) dateTo.value = today;
+    
+    $('#' + type + '_dateFrom').trigger('change');
+  };
+
+  window.filterThisMonth = function(type) {
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+    
+    const dateFrom = document.getElementById(type + '_dateFrom');
+    const dateTo = document.getElementById(type + '_dateTo');
+    
+    if (dateFrom) dateFrom.value = firstDay;
+    if (dateTo) dateTo.value = lastDay;
+    
+    $('#' + type + '_dateFrom').trigger('change');
+  };
+</script>
+
+<!-- Modern enhanced styles -->
+<style>
+  /* Font Awesome fallback */
+  .fa, .fas, .far, .fal, .fab {
+    font-family: "Font Awesome 6 Free", "Font Awesome 6 Pro", "Font Awesome 5 Free", "Font Awesome 5 Pro", FontAwesome;
+    font-weight: 900;
+  }
+
+  /* Modern DataTables styling */
+  .dataTables_wrapper {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  /* Modern header layout */
+  .modern-datatable-header {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+
+  @media (min-width: 640px) {
+    .modern-datatable-header {
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+    }
+  }
+
+  /* Modern search container */
+  .search-container {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .search-container label {
+    display: none;
+  }
+
+  .search-container input {
+    width: 100%;
+    padding: 0.875rem 1.25rem 0.875rem 3rem !important;
+    border: 2px solid #e1e5e9 !important;
+    border-radius: 50px !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    color: #374151 !important;
+    background: #ffffff !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    margin: 0 !important;
+  }
+
+  .search-container input:focus {
+    outline: none !important;
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1), 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+    transform: translateY(-1px) !important;
+  }
+
+  .search-container::before {
+    content: "🔍";
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    font-size: 1.125rem;
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  /* Modern length menu */
+  .length-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  .length-container label {
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.875rem;
+    white-space: nowrap;
+  }
+
+  .length-container select {
+    padding: 0.625rem 2.5rem 0.625rem 1rem !important;
+    border: 2px solid #e1e5e9 !important;
+    border-radius: 0.75rem !important;
+    font-size: 0.875rem !important;
+    font-weight: 600 !important;
+    color: #374151 !important;
+    background: #ffffff url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") no-repeat right 0.75rem center/1rem !important;
+    appearance: none !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    cursor: pointer !important;
+    margin: 0 !important;
+  }
+
+  .length-container select:focus {
+    outline: none !important;
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1), 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+    transform: translateY(-1px) !important;
+  }
+
+  .length-container select:hover {
+    border-color: #d1d5db !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  /* Modern info styling */
+  .dataTables_wrapper .dataTables_info {
+    font-weight: 600;
+    color: #4b5563;
+    font-size: 0.875rem;
+    padding: 1rem 0;
+    background: linear-gradient(135deg, #f9fafb, #f3f4f6);
+    border-radius: 0.75rem;
+    text-align: center;
+    margin: 1rem 0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Ultra-modern pagination */
+  .dataTables_wrapper .dataTables_paginate {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button {
+    padding: 0.75rem 1.25rem !important;
+    margin: 0 0.125rem !important;
+    border-radius: 50px !important;
+    border: 2px solid transparent !important;
+    background: #ffffff !important;
+    color: #4b5563 !important;
+    font-weight: 600 !important;
+    font-size: 0.875rem !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+    text-decoration: none !important;
+    min-width: 44px !important;
+    text-align: center !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    background: #f8fafc !important;
+    border-color: #e1e5e9 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.15) !important;
+    color: #1f2937 !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+    border-color: #2563eb !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px -2px rgba(59, 130, 246, 0.4) !important;
+    transform: translateY(-1px) !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 16px -4px rgba(59, 130, 246, 0.5) !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+    background: #f9fafb !important;
+    color: #9ca3af !important;
+    border-color: #e5e7eb !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover {
+    background: #f9fafb !important;
+    color: #9ca3af !important;
+    transform: none !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  }
+
+  /* Special styling for Previous/Next buttons */
+  .dataTables_wrapper .dataTables_paginate .paginate_button.previous,
+  .dataTables_wrapper .dataTables_paginate .paginate_button.next {
+    background: linear-gradient(135deg, #f1f5f9, #e2e8f0) !important;
+    border: 2px solid #cbd5e1 !important;
+    font-weight: 700 !important;
+    padding: 0.75rem 1.5rem !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button.previous:hover,
+  .dataTables_wrapper .dataTables_paginate .paginate_button.next:hover {
+    background: linear-gradient(135deg, #e2e8f0, #cbd5e1) !important;
+    border-color: #94a3b8 !important;
+  }
+
+  /* First/Last buttons styling */
+  .dataTables_wrapper .dataTables_paginate .paginate_button.first,
+  .dataTables_wrapper .dataTables_paginate .paginate_button.last {
+    background: linear-gradient(135deg, #fef3c7, #fde68a) !important;
+    border: 2px solid #f59e0b !important;
+    color: #92400e !important;
+    font-weight: 700 !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button.first:hover,
+  .dataTables_wrapper .dataTables_paginate .paginate_button.last:hover {
+    background: linear-gradient(135deg, #fde68a, #fcd34d) !important;
+    border-color: #d97706 !important;
+    color: #78350f !important;
+  }
+
+  /* Enhanced table styling */
+  .dataTable {
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    border: none;
+  }
+
+  .dataTable thead th {
+    background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+    border: none;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    padding: 1.25rem 1rem;
+    color: #ffffff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    position: relative;
+  }
+
+  .dataTable thead th:first-child {
+    border-top-left-radius: 1rem;
+  }
+
+  .dataTable thead th:last-child {
+    border-top-right-radius: 1rem;
+  }
+
+  .dataTable tbody td {
+    padding: 1rem;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+
+  .dataTable tbody tr {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .dataTable tbody tr:hover {
+    background: linear-gradient(90deg, #fef3c7, #fef7cd, #ffffff) !important;
+    transform: scale(1.002) translateZ(0);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  .dataTable tbody tr:nth-child(even) {
+    background: linear-gradient(90deg, #f8fafc, #ffffff);
+  }
+
+  .dataTable tbody tr:nth-child(odd) {
+    background: #ffffff;
+  }
+
+  /* Enhanced buttons */
+  .btn-group .btn {
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 2px solid;
+    margin: 0 0.125rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .btn-outline-primary {
+    color: #3b82f6;
+    border-color: #3b82f6;
+    background: linear-gradient(135deg, #ffffff, #f8fafc);
+  }
+
+  .btn-outline-primary:hover {
+    color: #ffffff;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    border-color: #2563eb;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px -4px rgba(59, 130, 246, 0.4);
+  }
+
+  .btn-outline-danger {
+    color: #ef4444;
+    border-color: #ef4444;
+    background: linear-gradient(135deg, #ffffff, #fef2f2);
+  }
+
+  .btn-outline-danger:hover {
+    color: #ffffff;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    border-color: #dc2626;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px -4px rgba(239, 68, 68, 0.4);
+  }
+
+  /* Responsive enhancements */
+  @media (max-width: 768px) {
+    .modern-datatable-header {
+      padding: 1rem;
+    }
+
+    .search-container input {
+      font-size: 16px !important; /* Prevent zoom on iOS */
+    }
+
+    .dataTables_wrapper .dataTables_paginate {
+      padding: 1rem;
+      gap: 0.25rem;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+      padding: 0.5rem 0.75rem !important;
+      font-size: 0.75rem !important;
+      min-width: 36px !important;
+    }
+
+    .dataTable thead th,
+    .dataTable tbody td {
+      padding: 0.75rem 0.5rem;
+      font-size: 0.875rem;
+    }
+  }
+
+  /* Animation for page load */
+  .datatable-container {
+    animation: slideInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  
+  @keyframes slideInUp {
+    from {
+      opacity: 0;
+      transform: translate3d(0, 30px, 0);
+    }
+    to {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
+  }
+
+  /* Loading states */
+  .dataTables_processing {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 200px;
+    margin-left: -100px;
+    margin-top: -26px;
+    text-align: center;
+    padding: 1rem 2rem;
+    background: linear-gradient(135deg, #ffffff, #f8fafc);
+    border: 2px solid #e1e5e9;
+    border-radius: 1rem;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    font-weight: 600;
+    color: #374151;
+  }
+</style>

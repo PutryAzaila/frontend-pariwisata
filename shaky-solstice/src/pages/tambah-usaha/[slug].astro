@@ -1,0 +1,997 @@
+---
+// src/pages/tambah-usaha/[slug].astro
+import AdminLayout from "../../layouts/AdminLayout.astro";
+
+// Extract slug information (pokdarwis atau bumdes)
+const slug: string = Astro.params.slug ?? "";
+
+// Base URL untuk endpoint
+const baseUrl = 'https://pengmas.hipmi-tup.com/dashboard';
+
+// Validate module
+const validModules = ['pokdarwis', 'bumdes'];
+if (!validModules.includes(slug)) {
+  return Astro.redirect('/404');
+}
+---
+
+
+<AdminLayout title={`Tambah Usaha - ${slug}`}>
+  <!-- Font Awesome CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <div class="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <!-- Header -->
+    <div class="bg-white shadow-sm border-b border-gray-100">
+      <div class="max-w-7xl mx-auto px-6 py-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-2xl font-bold text-gray-900">Tambah Jenis Usaha Baru</h1>
+            <p class="text-gray-600 mt-1">
+              Modul <span class="font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded-full text-sm">{slug.toUpperCase()}</span>
+            </p>
+          </div>
+          <div class="hidden md:flex items-center space-x-2 text-sm text-gray-500">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span>Pastikan data yang diinput sudah benar</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-6 py-8">
+      <!-- Messages -->
+      <div id="success-message" class="hidden mb-6">
+        <div class="bg-green-50 border border-green-200 rounded-xl p-4 shadow-sm">
+          <div class="flex items-start gap-3">
+            <div class="bg-green-100 rounded-full p-1">
+              <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="font-semibold text-green-800">Berhasil!</h3>
+              <p class="text-green-700 mt-1" id="success-text"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="error-message" class="hidden mb-6">
+        <div class="bg-red-50 border border-red-200 rounded-xl p-4 shadow-sm">
+          <div class="flex items-start gap-3">
+            <div class="bg-red-100 rounded-full p-1">
+              <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="font-semibold text-red-800">Terjadi Kesalahan!</h3>
+              <p class="text-red-700 mt-1" id="error-text"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Container untuk Layout 50/50 -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+        <!-- Sidebar Kiri: Informasi Dasar & Tips - 50% width -->
+        <div class="space-y-4 lg:space-y-6 order-1">
+          <!-- Informasi Dasar -->
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-500 to-blue-600 px-4 lg:px-6 py-3 lg:py-4">
+              <h2 class="text-base lg:text-lg font-semibold text-white flex items-center gap-2">
+                <svg class="w-4 h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Informasi Dasar
+              </h2>
+            </div>
+            
+            <div class="p-4 lg:p-6 space-y-4 lg:space-y-6">
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                  Nama Jenis Usaha <span class="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="business-name"
+                  class="w-full px-3 lg:px-4 py-2.5 lg:py-3 border border-gray-200 rounded-lg lg:rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white text-sm lg:text-base"
+                  placeholder="Contoh: Warung Makan, Toko Kelontong, Jasa Laundry"
+                />
+              </div>
+
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2 lg:mb-3">
+                  Ikon (Opsional)
+                </label>
+                
+                <!-- Icon Grid -->
+                <div class="bg-gray-50 rounded-lg lg:rounded-xl p-3 lg:p-4 mb-3 lg:mb-4">
+                  <div class="grid grid-cols-3 sm:grid-cols-4 gap-1.5 lg:gap-2">
+                    <div class="icon-option cursor-pointer p-2 lg:p-3 rounded-lg text-center hover:bg-blue-100 transition-all duration-200 border-2 border-transparent hover:border-blue-200" data-icon="store" title="Toko">
+                      <i class="fas fa-store text-base lg:text-lg text-gray-600"></i>
+                      <p class="text-xs text-gray-600 mt-1 font-medium">Toko</p>
+                    </div>
+                    <div class="icon-option cursor-pointer p-2 lg:p-3 rounded-lg text-center hover:bg-blue-100 transition-all duration-200 border-2 border-transparent hover:border-blue-200" data-icon="utensils" title="Warung Makan">
+                      <i class="fas fa-utensils text-base lg:text-lg text-gray-600"></i>
+                      <p class="text-xs text-gray-600 mt-1 font-medium">Makan</p>
+                    </div>
+                    <div class="icon-option cursor-pointer p-2 lg:p-3 rounded-lg text-center hover:bg-blue-100 transition-all duration-200 border-2 border-transparent hover:border-blue-200" data-icon="coffee" title="Warung Kopi">
+                      <i class="fas fa-coffee text-base lg:text-lg text-gray-600"></i>
+                      <p class="text-xs text-gray-600 mt-1 font-medium">Kopi</p>
+                    </div>
+                    <div class="icon-option cursor-pointer p-2 lg:p-3 rounded-lg text-center hover:bg-blue-100 transition-all duration-200 border-2 border-transparent hover:border-blue-200" data-icon="shopping-cart" title="Belanja">
+                      <i class="fas fa-shopping-cart text-base lg:text-lg text-gray-600"></i>
+                      <p class="text-xs text-gray-600 mt-1 font-medium">Belanja</p>
+                    </div>
+                    <div class="icon-option cursor-pointer p-2 lg:p-3 rounded-lg text-center hover:bg-blue-100 transition-all duration-200 border-2 border-transparent hover:border-blue-200" data-icon="tshirt" title="Laundry">
+                      <i class="fas fa-tshirt text-base lg:text-lg text-gray-600"></i>
+                      <p class="text-xs text-gray-600 mt-1 font-medium">Laundry</p>
+                    </div>
+                    <div class="icon-option cursor-pointer p-2 lg:p-3 rounded-lg text-center hover:bg-blue-100 transition-all duration-200 border-2 border-transparent hover:border-blue-200" data-icon="cut" title="Salon">
+                      <i class="fas fa-cut text-base lg:text-lg text-gray-600"></i>
+                      <p class="text-xs text-gray-600 mt-1 font-medium">Salon</p>
+                    </div>
+                    <div class="icon-option cursor-pointer p-2 lg:p-3 rounded-lg text-center hover:bg-blue-100 transition-all duration-200 border-2 border-transparent hover:border-blue-200" data-icon="car" title="Bengkel">
+                      <i class="fas fa-car text-base lg:text-lg text-gray-600"></i>
+                      <p class="text-xs text-gray-600 mt-1 font-medium">Bengkel</p>
+                    </div>
+                    <div class="icon-option cursor-pointer p-2 lg:p-3 rounded-lg text-center hover:bg-blue-100 transition-all duration-200 border-2 border-transparent hover:border-blue-200" data-icon="home" title="Kontrakan">
+                      <i class="fas fa-home text-base lg:text-lg text-gray-600"></i>
+                      <p class="text-xs text-gray-600 mt-1 font-medium">Rumah</p>
+                    </div>
+                    <div class="icon-option cursor-pointer p-2 lg:p-3 rounded-lg text-center hover:bg-blue-100 transition-all duration-200 border-2 border-transparent hover:border-blue-200" data-icon="seedling" title="Pertanian">
+                      <i class="fas fa-seedling text-base lg:text-lg text-gray-600"></i>
+                      <p class="text-xs text-gray-600 mt-1 font-medium">Tani</p>
+                    </div>
+                    <div class="icon-option cursor-pointer p-2 lg:p-3 rounded-lg text-center hover:bg-blue-100 transition-all duration-200 border-2 border-transparent hover:border-blue-200" data-icon="fish" title="Perikanan">
+                      <i class="fas fa-fish text-base lg:text-lg text-gray-600"></i>
+                      <p class="text-xs text-gray-600 mt-1 font-medium">Ikan</p>
+                    </div>
+                    <div class="icon-option cursor-pointer p-2 lg:p-3 rounded-lg text-center hover:bg-blue-100 transition-all duration-200 border-2 border-transparent hover:border-blue-200" data-icon="hammer" title="Tukang">
+                      <i class="fas fa-hammer text-base lg:text-lg text-gray-600"></i>
+                      <p class="text-xs text-gray-600 mt-1 font-medium">Tukang</p>
+                    </div>
+                    <div class="icon-option cursor-pointer p-2 lg:p-3 rounded-lg text-center hover:bg-blue-100 transition-all duration-200 border-2 border-transparent hover:border-blue-200" data-icon="motorcycle" title="Ojek">
+                      <i class="fas fa-motorcycle text-base lg:text-lg text-gray-600"></i>
+                      <p class="text-xs text-gray-600 mt-1 font-medium">Ojek</p>
+                    </div>
+                    <div class="icon-option cursor-pointer p-2 lg:p-3 rounded-lg text-center hover:bg-blue-100 transition-all duration-200 border-2 border-transparent hover:border-blue-200" data-icon="briefcase" title="Jasa">
+                      <i class="fas fa-briefcase text-base lg:text-lg text-gray-600"></i>
+                      <p class="text-xs text-gray-600 mt-1 font-medium">Jasa</p>
+                    </div>
+                    <div class="icon-option cursor-pointer p-2 lg:p-3 rounded-lg text-center hover:bg-blue-100 transition-all duration-200 border-2 border-transparent hover:border-blue-200" data-icon="gamepad" title="Warnet">
+                      <i class="fas fa-gamepad text-base lg:text-lg text-gray-600"></i>
+                      <p class="text-xs text-gray-600 mt-1 font-medium">Warnet</p>
+                    </div>
+                    <div class="icon-option cursor-pointer p-2 lg:p-3 rounded-lg text-center hover:bg-blue-100 transition-all duration-200 border-2 border-transparent hover:border-blue-200" data-icon="ice-cream" title="Es/Minuman">
+                      <i class="fas fa-ice-cream text-base lg:text-lg text-gray-600"></i>
+                      <p class="text-xs text-gray-600 mt-1 font-medium">Es</p>
+                    </div>
+                    <div class="icon-option cursor-pointer p-2 lg:p-3 rounded-lg text-center hover:bg-blue-100 transition-all duration-200 border-2 border-transparent hover:border-blue-200" data-icon="heart" title="Lainnya">
+                      <i class="fas fa-heart text-base lg:text-lg text-gray-600"></i>
+                      <p class="text-xs text-gray-600 mt-1 font-medium">Lain</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Manual Input & Preview -->
+                <div class="space-y-3">
+                  <div class="flex flex-col sm:flex-row gap-2">
+                    <input
+                      type="text"
+                      id="business-icon"
+                      class="flex-1 px-3 lg:px-4 py-2.5 lg:py-3 border border-gray-200 rounded-lg lg:rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white text-sm lg:text-base"
+                      placeholder="store"
+                    />
+                    <div class="flex gap-2">
+                      <button
+                        type="button"
+                        id="clear-icon-btn"
+                        class="px-3 lg:px-4 py-2.5 lg:py-3 bg-gray-100 text-gray-600 rounded-lg lg:rounded-xl hover:bg-gray-200 transition-all duration-200 font-medium text-xs lg:text-sm"
+                      >
+                        Hapus
+                      </button>
+                      <a 
+                        href="https://fontawesome.com/icons" 
+                        target="_blank" 
+                        class="px-3 lg:px-4 py-2.5 lg:py-3 bg-blue-500 text-white rounded-lg lg:rounded-xl hover:bg-blue-600 transition-all duration-200 font-medium text-center text-xs lg:text-sm whitespace-nowrap"
+                      >
+                        Cari
+                      </a>
+                    </div>
+                  </div>
+                  
+                  <!-- Preview -->
+                  <div id="icon-preview" class="hidden">
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg lg:rounded-xl p-3">
+                      <div class="flex items-center gap-3">
+                        <div class="bg-blue-100 rounded-lg p-2">
+                          <i id="preview-icon" class="text-blue-600 text-base lg:text-lg"></i>
+                        </div>
+                        <span class="text-xs lg:text-sm font-medium text-blue-700">Preview ikon yang dipilih</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <p class="text-xs text-gray-500 mt-2">Pilih ikon dari grid di atas atau ketik nama ikon manual (tanpa "fa-")</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Tips -->
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="bg-gradient-to-r from-amber-400 to-orange-500 px-4 py-3">
+              <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                </svg>
+                Tips Pengisian
+              </h3>
+            </div>
+            <div class="p-3 lg:p-4 space-y-2 lg:space-y-3">
+              <div class="flex items-start gap-2 lg:gap-3">
+                <div class="bg-blue-100 rounded-full p-1 mt-0.5 flex-shrink-0">
+                  <svg class="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
+                  </svg>
+                </div>
+                <p class="text-xs text-gray-600">Gunakan nama yang mudah dipahami untuk jenis usaha</p>
+              </div>
+              <div class="flex items-start gap-2 lg:gap-3">
+                <div class="bg-blue-100 rounded-full p-1 mt-0.5 flex-shrink-0">
+                  <svg class="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
+                  </svg>
+                </div>
+                <p class="text-xs text-gray-600">Nama parameter harus menggunakan underscore (contoh: jumlah_barang)</p>
+              </div>
+              <div class="flex items-start gap-2 lg:gap-3">
+                <div class="bg-blue-100 rounded-full p-1 mt-0.5 flex-shrink-0">
+                  <svg class="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
+                  </svg>
+                </div>
+                <p class="text-xs text-gray-600">Atur urutan parameter sesuai prioritas pengisian</p>
+              </div>
+              <div class="flex items-start gap-2 lg:gap-3">
+                <div class="bg-blue-100 rounded-full p-1 mt-0.5 flex-shrink-0">
+                  <svg class="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
+                  </svg>
+                </div>
+                <p class="text-xs text-gray-600">Gunakan validasi required untuk data wajib</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Button -->
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-4 lg:p-6">
+              <button
+                type="button"
+                id="submit-btn"
+                disabled
+                class="w-full inline-flex items-center justify-center gap-2 lg:gap-3 px-4 lg:px-6 py-3 lg:py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-xl hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              >
+                <svg id="submit-icon" class="w-4 h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                <span id="submit-text" class="text-sm lg:text-base">Simpan Jenis Usaha</span>
+              </button>
+              <p class="text-xs text-gray-500 text-center mt-3">Pastikan semua data sudah benar sebelum menyimpan</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Parameters Card - 50% width -->
+        <div class="order-3 lg:order-2">
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="bg-gradient-to-r from-purple-500 to-purple-600 px-4 lg:px-6 py-4">
+              <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div>
+                  <h3 class="text-base lg:text-lg font-semibold text-white flex items-center gap-2">
+                    <svg class="w-4 h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    Parameter Data
+                  </h3>
+                  <p class="text-purple-100 mt-1 text-sm">Tentukan data apa saja yang perlu diisi untuk jenis usaha ini</p>
+                </div>
+                <button
+                  type="button"
+                  id="add-field-btn"
+                  class="cursor-pointer inline-flex items-center gap-2 px-3 lg:px-4 py-2 bg-white text-purple-600 text-xs lg:text-sm font-medium rounded-lg hover:bg-purple-50 focus:outline-none focus:ring-2 focus:ring-purple-300 transition-all duration-200 whitespace-nowrap"
+                >
+                  <svg class="w-3 h-3 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                  </svg>
+                  Tambah Parameter
+                </button>
+              </div>
+            </div>
+
+            <div class="p-4 lg:p-6">
+              <div id="fields-container" class="space-y-4">
+                <!-- Fields akan di-render oleh JavaScript -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script define:vars={{ baseUrl, slug }}>
+    class TambahUsahaManager {
+      constructor() {
+        this.baseUrl = baseUrl;
+        this.module = slug;
+        this.endpoint = `${this.baseUrl}/${this.module}/business`;
+        
+        this.formData = {
+          name: '',
+          icon: '',
+          fields: [
+            {
+              name: 'transaction_date',
+              label: 'Tanggal Transaksi',
+              type: 'date',
+              placeholder: 'Pilih tanggal transaksi',
+              validation_rules: ['required'],
+              order: 1,
+              options: null
+            },
+            {
+              name: 'amount',
+              label: 'Jumlah Pemasukan',
+              type: 'number',
+              placeholder: 'Masukkan nominal dalam rupiah',
+              validation_rules: ['required', 'numeric', 'min:0'],
+              order: 2,
+              options: null
+            }
+          ]
+        };
+
+        this.isLoading = false;
+        this.init();
+      }
+
+      init() {
+        this.bindEvents();
+        this.renderFields();
+        this.validateForm();
+        this.updateIconPreview();
+      }
+
+      bindEvents() {
+        document.getElementById('business-name').addEventListener('input', (e) => {
+          this.formData.name = e.target.value;
+          this.validateForm();
+        });
+
+        document.getElementById('business-icon').addEventListener('input', (e) => {
+          this.updateIcon(e.target.value);
+        });
+
+        document.getElementById('add-field-btn').addEventListener('click', () => {
+          this.addField();
+        });
+
+        document.getElementById('submit-btn').addEventListener('click', () => {
+          this.handleSubmit();
+        });
+
+        document.getElementById('clear-icon-btn').addEventListener('click', () => {
+          this.clearIcon();
+        });
+
+        // Icon selection events
+        document.querySelectorAll('.icon-option').forEach(option => {
+          option.addEventListener('click', () => {
+            const iconName = option.dataset.icon;
+            this.selectIcon(iconName);
+          });
+        });
+      }
+
+    updateIcon(value) {
+    this.formData.icon = value || '';
+    this.updateIconPreview();
+    this.updateIconSelection();
+  }
+
+  selectIcon(iconName) {
+    document.getElementById('business-icon').value = iconName;
+    this.formData.icon = iconName;
+    this.updateIconPreview();
+    this.updateIconSelection();
+  }
+      clearIcon() {
+        document.getElementById('business-icon').value = '';
+        this.formData.icon = '';
+        this.updateIconPreview();
+        this.updateIconSelection();
+      }
+
+      updateIconPreview() {
+      const previewContainer = document.getElementById('icon-preview');
+      const previewIcon = document.getElementById('preview-icon');
+      
+      if (this.formData.icon) {
+        const iconClass = this.formData.icon.startsWith('fa-') 
+          ? `fas ${this.formData.icon}` 
+          : `fas fa-${this.formData.icon}`;
+          
+        previewIcon.className = `${iconClass} text-blue-600 text-base lg:text-lg`;
+        previewContainer.classList.remove('hidden');
+      } else {
+        previewContainer.classList.add('hidden');
+      }
+    }
+
+      updateIconSelection() {
+        document.querySelectorAll('.icon-option').forEach(option => {
+          option.classList.remove('bg-blue-100', 'border-blue-400', 'shadow-md');
+        });
+
+        if (this.formData.icon) {
+          const iconName = this.formData.icon.replace('fa-', '');
+          const selectedOption = document.querySelector(`.icon-option[data-icon="${iconName}"]`);
+          if (selectedOption) {
+            selectedOption.classList.add('bg-blue-100', 'border-blue-400', 'shadow-md');
+          }
+        }
+      }
+
+      validateForm() {
+        const submitBtn = document.getElementById('submit-btn');
+        const isValid = this.formData.name.trim().length > 0;
+        submitBtn.disabled = !isValid;
+      }
+
+      addField() {
+        const newOrder = Math.max(...this.formData.fields.map(f => f.order || 0)) + 1;
+        const newField = {
+          name: '',
+          label: '',
+          type: 'text',
+          placeholder: '',
+          validation_rules: [],
+          order: newOrder,
+          options: null
+        };
+        this.formData.fields.push(newField);
+        this.renderFields();
+      }
+
+      removeField(index) {
+        if (this.formData.fields.length > 1) {
+          this.formData.fields.splice(index, 1);
+          this.renderFields();
+        }
+      }
+
+      updateField(index, key, value) {
+        if (key === 'validation_rules') {
+          this.formData.fields[index][key] = value ? value.split(',').map(rule => rule.trim()) : [];
+        } else if (key === 'options') {
+          // Handle options for select, radio, checkbox
+          if (value && value.trim()) {
+            this.formData.fields[index][key] = value.split(',').map(opt => opt.trim());
+          } else {
+            this.formData.fields[index][key] = null;
+          }
+        } else if (key === 'order') {
+          this.formData.fields[index][key] = parseInt(value) || 0;
+        } else {
+          this.formData.fields[index][key] = value;
+        }
+      }
+
+      renderFields() {
+        const container = document.getElementById('fields-container');
+        container.innerHTML = '';
+
+        this.formData.fields.forEach((field, index) => {
+          const fieldDiv = document.createElement('div');
+          fieldDiv.className = 'bg-gradient-to-r from-gray-50 to-slate-50 border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-200';
+          
+          const showOptions = ['select', 'radio', 'checkbox'].includes(field.type);
+          
+          fieldDiv.innerHTML = `
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-2">
+                <div class="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-semibold">${index + 1}</div>
+                <h4 class="text-sm font-semibold text-gray-900">Parameter ${index + 1}</h4>
+              </div>
+              ${this.formData.fields.length > 1 ? `
+                <button type="button" class="remove-field-btn text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors duration-200">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                  </svg>
+                </button>
+              ` : ''}
+            </div>
+            
+            <!-- Main fields grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label class="block text-xs font-semibold text-gray-700 mb-2">Nama Parameter <span class="text-red-500">*</span></label>
+                <input type="text" value="${field.name}" class="field-name w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white" placeholder="nama_parameter" />
+                <p class="text-xs text-gray-500 mt-1">Gunakan underscore, contoh: jumlah_barang</p>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-gray-700 mb-2">Label <span class="text-red-500">*</span></label>
+                <input type="text" value="${field.label}" class="field-label w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white" placeholder="Jumlah Barang" />
+                <p class="text-xs text-gray-500 mt-1">Label yang terlihat oleh user</p>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-gray-700 mb-2">Jenis Input</label>
+                <select class="field-type w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white">
+                  <option value="text" ${field.type === 'text' ? 'selected' : ''}>📝 Teks</option>
+                  <option value="number" ${field.type === 'number' ? 'selected' : ''}>🔢 Angka</option>
+                  <option value="date" ${field.type === 'date' ? 'selected' : ''}>📅 Tanggal</option>
+                  <option value="textarea" ${field.type === 'textarea' ? 'selected' : ''}>📄 Teks Panjang</option>
+                  <option value="select" ${field.type === 'select' ? 'selected' : ''}>📋 Pilihan Dropdown</option>
+                  <option value="radio" ${field.type === 'radio' ? 'selected' : ''}>⚪ Pilihan Radio</option>
+                  <option value="checkbox" ${field.type === 'checkbox' ? 'selected' : ''}>☑️ Centang</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-gray-700 mb-2">Urutan</label>
+                <input type="number" value="${field.order || 0}" class="field-order w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white" min="0" />
+                <p class="text-xs text-gray-500 mt-1">Urutan tampil di form</p>
+              </div>
+            </div>
+            
+            <!-- Secondary fields -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 ${showOptions ? 'mb-4' : ''}">
+              <div>
+                <label class="block text-xs font-semibold text-gray-700 mb-2">Petunjuk Pengisian</label>
+                <input type="text" value="${field.placeholder || ''}" class="field-placeholder w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white" placeholder="Masukkan petunjuk untuk user" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-gray-700 mb-2">Aturan Validasi</label>
+                <input type="text" value="${(field.validation_rules || []).join(', ')}" class="field-validation w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white" placeholder="required, numeric, min:0" />
+                <p class="text-xs text-gray-500 mt-1">Pisahkan dengan koma</p>
+              </div>
+            </div>
+
+            ${showOptions ? `
+              <div>
+                <label class="block text-xs font-semibold text-gray-700 mb-2">Pilihan <span class="text-red-500">*</span></label>
+                <input type="text" value="${field.options ? field.options.join(', ') : ''}" class="field-options w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white" placeholder="Pilihan 1, Pilihan 2, Pilihan 3" />
+                <p class="text-xs text-gray-500 mt-1">Pisahkan dengan koma untuk setiap pilihan</p>
+              </div>
+            ` : ''}
+          `;
+
+          // Bind events
+          const inputs = {
+            name: fieldDiv.querySelector('.field-name'),
+            label: fieldDiv.querySelector('.field-label'),
+            type: fieldDiv.querySelector('.field-type'),
+            placeholder: fieldDiv.querySelector('.field-placeholder'),
+            order: fieldDiv.querySelector('.field-order'),
+            validation_rules: fieldDiv.querySelector('.field-validation'),
+            options: fieldDiv.querySelector('.field-options')
+          };
+
+          Object.keys(inputs).forEach(key => {
+            const input = inputs[key];
+            if (input) {
+              input.addEventListener(input.type === 'select-one' ? 'change' : 'input', (e) => {
+                this.updateField(index, key, e.target.value);
+                
+                // Re-render if type changes to show/hide options
+                if (key === 'type') {
+                  this.renderFields();
+                }
+              });
+            }
+          });
+
+          const removeBtn = fieldDiv.querySelector('.remove-field-btn');
+          if (removeBtn) {
+            removeBtn.addEventListener('click', () => this.removeField(index));
+          }
+
+          container.appendChild(fieldDiv);
+        });
+      }
+
+      showMessage(type, message) {
+        const successEl = document.getElementById('success-message');
+        const errorEl = document.getElementById('error-message');
+        
+        successEl.classList.add('hidden');
+        errorEl.classList.add('hidden');
+
+        if (type === 'success') {
+          document.getElementById('success-text').textContent = message;
+          successEl.classList.remove('hidden');
+        } else {
+          document.getElementById('error-text').textContent = message;
+          errorEl.classList.remove('hidden');
+        }
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        
+        setTimeout(() => {
+          successEl.classList.add('hidden');
+          errorEl.classList.add('hidden');
+        }, 5000);
+      }
+
+      setLoading(loading) {
+        this.isLoading = loading;
+        const submitBtn = document.getElementById('submit-btn');
+        const submitText = document.getElementById('submit-text');
+        const submitIcon = document.getElementById('submit-icon');
+
+        if (loading) {
+          submitBtn.disabled = true;
+          submitText.textContent = 'Menyimpan...';
+          submitIcon.innerHTML = `
+            <svg class="w-4 h-4 lg:w-5 lg:h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+          `;
+        } else {
+          this.validateForm();
+          submitText.textContent = 'Simpan Jenis Usaha';
+          submitIcon.innerHTML = `
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          `;
+        }
+      }
+// Enhanced handleSubmit method for tambah-usaha page
+async handleSubmit() {
+  if (this.isLoading || !this.formData.name.trim()) {
+    this.showMessage('error', 'Nama jenis usaha harus diisi');
+    return;
+  }
+
+  // Validate fields
+  for (let i = 0; i < this.formData.fields.length; i++) {
+    const field = this.formData.fields[i];
+    if (!field.name || !field.label) {
+      this.showMessage('error', `Parameter ${i + 1}: Nama parameter dan label harus diisi`);
+      return;
+    }
+    
+    if (['select', 'radio', 'checkbox'].includes(field.type) && (!field.options || field.options.length === 0)) {
+      this.showMessage('error', `Parameter ${i + 1}: Pilihan harus diisi untuk jenis input ${field.type}`);
+      return;
+    }
+  }
+
+  this.setLoading(true);
+
+  try {
+    const authToken = localStorage.getItem('access_token');
+    const tokenType = localStorage.getItem('token_type') || 'Bearer';
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    
+    console.log('=== AUTH DEBUG ===');
+    console.log('Auth token:', authToken ? 'Present' : 'Missing');
+    console.log('Token type:', tokenType);
+
+    if (!authToken) {
+      this.showMessage('error', 'Session telah berakhir. Silakan login kembali.');
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 2000);
+      return;
+    }
+
+    const headers = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+      'Authorization': `${tokenType} ${authToken}`
+    };
+
+    if (csrfToken) {
+      headers['X-CSRF-TOKEN'] = csrfToken;
+    }
+
+    const payload = {
+      ...this.formData,
+      fields: this.formData.fields.map(field => ({
+        ...field,
+        options: field.options || []
+      }))
+    };
+
+    console.log('Submitting to:', this.endpoint);
+    console.log('Payload:', payload);
+
+    const response = await fetch(this.endpoint, {
+      method: 'POST',
+      headers: headers,
+      credentials: 'include',
+      body: JSON.stringify(payload)
+    });
+
+    console.log('Response status:', response.status);
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.log('Error response:', errorData);
+      
+      if (response.status === 401) {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('token_type');
+        localStorage.removeItem('user_data');
+        
+        this.showMessage('error', 'Session telah berakhir. Silakan login kembali.');
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 2000);
+        return;
+      }
+      
+      if (response.status === 422) {
+        console.log('Validation errors:', errorData.errors);
+        
+        let errorMessage = 'Validation failed:';
+        if (errorData.errors) {
+          Object.keys(errorData.errors).forEach(field => {
+            const errors = errorData.errors[field];
+            if (Array.isArray(errors)) {
+              errorMessage += `\n• ${field}: ${errors.join(', ')}`;
+            } else {
+              errorMessage += `\n• ${field}: ${errors}`;
+            }
+          });
+        }
+        
+        this.showMessage('error', errorMessage);
+        return;
+      }
+      
+      throw new Error(errorData.message || `Server error ${response.status}`);
+    }
+
+    const result = await response.json();
+    console.log('Success response:', result);
+    
+    if (result.success) {
+      this.showMessage('success', `Jenis usaha "${this.formData.name}" berhasil dibuat!`);
+      this.resetForm();
+      
+      // FIXED: Update permissions first, then refresh sidebar
+      console.log('🔄 Starting permission and sidebar refresh sequence...');
+      
+      // Step 1: Refresh permissions with retry logic
+      const permissionsUpdated = await this.refreshUserPermissionsWithRetry();
+      
+      if (permissionsUpdated) {
+        console.log('✅ Permissions updated successfully');
+        
+        // Step 2: Wait a bit for backend to be consistent
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        // Step 3: Refresh sidebar
+        if (window.reloadSidebar) {
+          console.log('🔄 Refreshing sidebar...');
+          await window.reloadSidebar();
+          console.log('✅ Sidebar refreshed');
+        }
+        
+        // Step 4: Trigger storage events for multi-tab sync
+        this.triggerStorageSync();
+        
+      } else {
+        console.warn('⚠️ Permissions update failed, sidebar may not show new menu');
+      }
+      
+    } else {
+      throw new Error(result.message || 'Gagal membuat jenis usaha');
+    }
+
+  } catch (error) {
+    console.error('Submit error:', error);
+    this.showMessage('error', `Terjadi kesalahan: ${error.message}`);
+  } finally {
+    this.setLoading(false);
+  }
+}
+
+// Simplified permission refresh using only profile/basic endpoint
+async refreshUserPermissionsWithRetry(maxRetries = 3) {
+  console.log('🔄 Starting permission refresh...');
+  
+  const authToken = localStorage.getItem('access_token');
+  const tokenType = localStorage.getItem('token_type') || 'Bearer';
+  
+  if (!authToken) {
+    console.warn('⚠️ No auth token for permissions refresh');
+    return false;
+  }
+  
+  const endpoint = 'https://pengmas.hipmi-tup.com/dashboard/profile';
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    console.log(`🔄 Permission refresh attempt ${attempt}/${maxRetries}`);
+    
+    try {
+      console.log(`📡 Fetching from: ${endpoint}`);
+      
+      const response = await fetch(endpoint, {
+        method: 'GET',
+        headers: {
+          'Authorization': `${tokenType} ${authToken}`,
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'include'
+      });
+      
+      console.log(`📊 Response ${response.status} from profile/basic`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const responseData = await response.json();
+      console.log('📊 Profile data received:', responseData);
+      
+      // Extract user data and permissions
+      let userData, permissions;
+      
+      if (responseData.success && responseData.data) {
+        userData = responseData.data;
+        permissions = userData.permissions || [];
+      } else {
+        console.warn('⚠️ Unexpected response structure from profile/basic');
+        throw new Error('Invalid response structure');
+      }
+      
+      // Update localStorage with fresh data
+      localStorage.setItem('user_data', JSON.stringify(userData));
+      console.log('✅ User data updated');
+      
+      if (Array.isArray(permissions)) {
+        localStorage.setItem('user_permissions', JSON.stringify(permissions));
+        console.log(`✅ Permissions updated: ${permissions.length} items`);
+        
+        // Debug log sample permissions
+        if (permissions.length > 0) {
+          console.log('📋 Sample permissions:', permissions.slice(0, 3));
+        }
+        
+        return true; // Success
+      } else {
+        console.warn('⚠️ No valid permissions array found');
+        return false;
+      }
+      
+    } catch (error) {
+      console.error(`❌ Attempt ${attempt} failed:`, error.message);
+      
+      // Wait before retry (except on last attempt)
+      if (attempt < maxRetries) {
+        const waitTime = Math.pow(2, attempt) * 1000; // Exponential backoff
+        console.log(`⏳ Waiting ${waitTime}ms before retry...`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+      }
+    }
+  }
+  
+  console.error('🚨 All permission refresh attempts failed');
+  return false;
+}
+
+// Trigger storage sync for multi-tab support
+triggerStorageSync() {
+  const userData = localStorage.getItem('user_data');
+  const permissions = localStorage.getItem('user_permissions');
+  
+  // Dispatch storage events
+  window.dispatchEvent(new StorageEvent('storage', {
+    key: 'user_data',
+    newValue: userData
+  }));
+  
+  window.dispatchEvent(new StorageEvent('storage', {
+    key: 'user_permissions', 
+    newValue: permissions
+  }));
+  
+  console.log('📡 Storage sync events dispatched');
+}
+
+      resetForm() {
+        this.formData = {
+          name: '',
+          icon: '',
+          fields: [
+            {
+              name: 'transaction_date',
+              label: 'Tanggal Transaksi',
+              type: 'date',
+              placeholder: 'Pilih tanggal transaksi',
+              validation_rules: ['required'],
+              order: 1,
+              options: null
+            },
+            {
+              name: 'amount',
+              label: 'Jumlah Pemasukan',
+              type: 'number',
+              placeholder: 'Masukkan nominal dalam rupiah',
+              validation_rules: ['required', 'numeric', 'min:0'],
+              order: 2,
+              options: null
+            }
+          ]
+        };
+
+        document.getElementById('business-name').value = '';
+        document.getElementById('business-icon').value = '';
+        
+        this.renderFields();
+        this.validateForm();
+        this.updateIconPreview();
+      }
+    }
+
+    // Initialize
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        new TambahUsahaManager();
+      });
+    } else {
+      new TambahUsahaManager();
+    }
+  </script>
+
+  <style>
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .animate-spin {
+      animation: spin 1s linear infinite;
+    }
+    
+    .icon-option {
+      transition: all 0.2s ease-in-out;
+    }
+    
+    .icon-option:hover {
+      transform: translateY(-2px);
+    }
+    
+    .icon-option.bg-blue-100 {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 3px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</AdminLayout>

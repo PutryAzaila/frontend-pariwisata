@@ -1,0 +1,62 @@
+---
+// src/layouts/AdminLayout.astro
+import '../styles/global.css';
+
+export interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = "Admin Dashboard - Pariwisata",
+  description = "Dashboard admin untuk manajemen pariwisata"
+} = Astro.props;
+---
+
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content={description} />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="csrf-token" content="" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+    <!-- Tailwind & DataTables CSS -->
+    <link rel="stylesheet" href="/src/styles/global.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/jquery.dataTables.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css" />
+
+    <title>{title}</title>
+  </head>
+  <body class="bg-gray-50 antialiased">
+    <slot />
+    
+    <!-- Script untuk mengisi CSRF token -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Fungsi untuk mendapatkan cookie
+        function getCookieValue(name: string): string | null {
+          const regex = new RegExp(`(^| )${name}=([^;]+)`);
+          const match = document.cookie.match(regex);
+          return match ? decodeURIComponent(match[2]) : null;
+        }
+        
+        // Update meta CSRF token dari cookie
+        const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+        if (csrfMeta) {
+          const csrfToken = getCookieValue('XSRF-TOKEN') || 
+                           getCookieValue('csrf_token') || 
+                           getCookieValue('laravel_session') ||
+                           '';
+          csrfMeta.setAttribute('content', csrfToken);
+          console.log('CSRF token set:', csrfToken);
+        }
+      });
+    </script>
+  </body>
+</html>

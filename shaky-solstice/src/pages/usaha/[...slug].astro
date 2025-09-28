@@ -1,0 +1,2010 @@
+---
+// src/pages/[...slug].astro
+import AdminLayout from "../../layouts/AdminLayout.astro";
+
+
+// Extract slug information
+const { slug } = Astro.params;
+const slugParts = (slug as string)?.split('/') || [];
+
+// Determine module and submodule from URL
+const module = slugParts[0]; // 'pokdarwis' or 'bumdes'  
+const submodule = slugParts[1]; // 'sewa-umkm', 'tiket-wisata', etc.
+
+// Validate required parts
+if (!module || !submodule) {
+  return Astro.redirect('/404');
+}
+
+// Module configuration
+const moduleConfig = {
+  pokdarwis: {
+    title: 'POKDARWIS',
+    color: 'blue',
+    icon: 'fas fa-users'
+  },
+  bumdes: {
+    title: 'BUMDES', 
+    color: 'purple',
+    icon: 'fas fa-building'
+  }
+};
+
+const config = moduleConfig[module as keyof typeof moduleConfig];
+if (!config) {
+  return Astro.redirect('/404');
+}
+
+// Format submodule name for display
+const submoduleName = submodule
+  .split('-')
+  .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+  .join(' ');
+
+const pageTitle = `${config.title} - ${submoduleName}`;
+---
+
+<AdminLayout title={pageTitle}>
+  <!-- Load Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Dynamic Data Table Container -->
+  <div id="app-container" 
+       data-module={module} 
+       data-submodule={submodule}
+       data-title={config.title}
+       data-color={config.color}
+       data-icon={config.icon}
+       class="dynamic-datatable-container">
+    <!-- Main Content -->
+    <div id="main-content" class="hidden">
+      <!-- Stats Cards -->
+    <div id="stats-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6 mb-6 md:mb-8">
+        <!-- Cards will be populated dynamically -->
+      </div>
+
+      <!-- Replace the Control Panel section in your original file with this updated version -->
+
+      <!-- Control Panel -->
+      <div class="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-lg mb-6 md:mb-8">
+        <!-- Header Section -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <h2 id="page-title" class="text-xl md:text-2xl font-bold text-gray-800 flex items-center">
+            <!-- Title will be populated dynamically -->
+          </h2>
+          
+          <!-- Action Buttons -->
+          <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
+            <button id="btn-add" 
+                    class="bg-blue-600 text-white px-4 py-2 md:px-6 md:py-3 rounded-lg hover:bg-blue-700 cursor-pointer transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 text-sm md:text-base">
+              <i class="fas fa-plus mr-2"></i>
+              <span class="hidden sm:inline">Tambah Data</span>
+              <span class="sm:hidden">Tambah</span>
+            </button>
+            <button id="btn-export-excel" 
+                    class="bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-2 md:px-6 md:py-3 rounded-lg hover:from-green-600 hover:to-green-700 cursor-pointer transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 text-sm md:text-base">
+              <i class="fas fa-file-excel mr-2"></i>
+              <span class="hidden sm:inline">Export Excel</span>
+              <span class="sm:hidden">Excel</span>
+            </button>
+            <button id="btn-export-pdf" 
+                    class="bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 md:px-6 md:py-3 rounded-lg hover:from-red-600 hover:to-red-700 cursor-pointer transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 text-sm md:text-base">
+              <i class="fas fa-file-pdf mr-2"></i>
+              <span class="hidden sm:inline">Export PDF</span>
+              <span class="sm:hidden">PDF</span>
+            </button>
+            <button id="btn-print" 
+                    class="bg-gradient-to-r from-gray-500 to-gray-600 text-white px-4 py-2 md:px-6 md:py-3 rounded-lg hover:from-gray-600 hover:to-gray-700 cursor-pointer transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 text-sm md:text-base">
+              <i class="fas fa-print mr-2"></i>
+              <span class="hidden sm:inline">Print</span>
+              <span class="sm:hidden">Print</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Dynamic Filters -->
+        <div id="filter-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
+          <!-- Filters will be populated dynamically based on fields -->
+        </div>
+      </div>
+
+      <!-- DataTable Container -->
+      <div class="bg-white rounded-xl md:rounded-2xl shadow-lg overflow-hidden">
+        <div class="p-4 md:p-6">
+          <div class="overflow-x-auto">
+            <table id="dynamic-table" class="w-full table-auto min-w-[800px]">
+              <thead>
+                <!-- Headers will be populated dynamically -->
+              </thead>
+              <tbody>
+                <!-- Data will be populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dynamic Modal -->
+  <div id="data-modal" class="fixed inset-0 bg-white/70 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 w-full max-w-2xl mx-auto max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div class="flex items-center justify-between mb-6">
+        <h3 id="modal-title" class="text-lg md:text-xl font-bold text-gray-800">
+          <!-- Modal title will be set dynamically -->
+        </h3>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 transition-colors p-1">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+
+      <form id="data-form" class="space-y-4">
+        <div id="form-fields">
+          <!-- Form fields will be populated dynamically -->
+        </div>
+
+        <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 pt-4 border-t border-gray-200">
+          <button type="button" onclick="closeModal()"
+                  class="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg hover:bg-gray-300 transition-all duration-300 font-medium text-sm md:text-base">
+            <i class="fas fa-times mr-2"></i>Batal
+          </button>
+          <button type="submit" id="btn-submit"
+                  class="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg font-medium text-sm md:text-base">
+            <i class="fas fa-save mr-2"></i>Simpan
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</AdminLayout>
+
+<script>
+  interface AppConfig {
+    module: string;
+    submodule: string;
+    title: string;
+    color: string;
+    icon: string;
+  }
+
+  interface FieldDefinition {
+    name: string;
+    type: string;
+    label: string;
+    required?: boolean;
+    options?: Array<string>;
+    validation?: {
+      min?: number;
+      max?: number;
+      pattern?: string;
+    };
+  }
+
+  interface ColumnDefinition {
+    name: string;
+    data: string;
+    title: string;
+    type: string;
+    sortable?: boolean;
+    searchable?: boolean;
+    format?: string;
+    width?: string;
+  }
+
+  interface ApiEndpoints {
+    base: string;
+    fields: string;
+    columns: string;
+    list: string;
+    create: string;
+    show: string;
+    update: string;
+    delete: string;
+  }
+  interface DataTableColumn {
+  data: string | null;
+  title: string;
+  orderable?: boolean;
+  searchable?: boolean;
+  className?: string;
+  render?: Function;
+}
+
+  interface DataTableInstance {
+    destroy(): void;
+    draw(): void;
+    ajax: {
+      reload(): void;
+    };
+    row(selector: any): {
+      remove(): DataTableInstance;
+    };
+    button(selector: string): {
+      trigger(): void;
+    };
+  }
+
+  let appConfig: AppConfig;
+  let fieldsConfig: FieldDefinition[] = [];
+  let columnsConfig: ColumnDefinition[] = [];
+  let apiEndpoints: ApiEndpoints;
+  let dataTable: DataTableInstance | null = null;
+  let editingId: string | null = null;
+
+function getAuthHeaders(): HeadersInit {
+  const token = localStorage.getItem('access_token');
+  const tokenType = (localStorage.getItem('token_type') || 'Bearer').trim();
+  
+  console.log('Auth Debug:', {
+    hasToken: !!token,
+    tokenType: tokenType,
+    tokenLength: token?.length || 0,
+    tokenPreview: token ? `${token.substring(0, 10)}...${token.substring(token.length - 5)}` : 'none'
+  });
+  
+  if (!token) {
+    console.warn('No access token found in localStorage');
+    throw new Error('NO_TOKEN'); 
+  }
+  
+  return {
+    'Authorization': `${tokenType} ${token}`,
+    'Accept': 'application/json',
+    'Content-Type': 'application/json'
+  };
+}
+
+function redirectToLogin(): void {
+  console.log('Redirecting to login...');
+  // Show user-friendly message before redirect
+  showErrorState('Sesi login Anda telah berakhir. Mengalihkan ke halaman login...');
+  
+  // Clear any existing data
+  clearAuthData();
+  
+  // Redirect after short delay to let user read the message
+  setTimeout(() => {
+    window.location.href = '/login';
+  }, 2000);
+}
+
+function clearAuthData(): void {
+  const keysToRemove = [
+    'access_token', 
+    'token_type', 
+    'user_data', 
+    'login_time', 
+    'user_role', 
+    'user_permissions',
+    'refresh_token'
+  ];
+  
+  keysToRemove.forEach(key => {
+    localStorage.removeItem(key);
+    console.log(`Cleared: ${key}`);
+  });
+}
+
+function debugAuthState(): void {
+  console.log('Current Auth State:');
+  console.log('access_token:', localStorage.getItem('access_token') ? 'EXISTS' : 'MISSING');
+  console.log('token_type:', localStorage.getItem('token_type') || 'MISSING');
+  console.log('user_data:', localStorage.getItem('user_data') ? 'EXISTS' : 'MISSING');
+  console.log('user_permissions:', localStorage.getItem('user_permissions') ? 'EXISTS' : 'MISSING');
+  console.log('login_time:', localStorage.getItem('login_time') || 'MISSING');
+  
+  const token = localStorage.getItem('access_token');
+  if (token && token.length > 15) {
+    console.log('Token preview:', `${token.substring(0, 10)}...${token.substring(token.length - 5)}`);
+  }
+}
+(window as any).debugAuthState = debugAuthState;
+(window as any).clearAuthData = clearAuthData;
+(window as any).redirectToLogin = redirectToLogin;
+
+
+async function initializeApp(): Promise<void> {
+  try {
+    // Extract configuration from DOM (tanpa loading state)
+    const container = document.getElementById('app-container');
+    if (!container) throw new Error('App container not found');
+
+    appConfig = {
+      module: container.dataset.module!,
+      submodule: container.dataset.submodule!,
+      title: container.dataset.title!,
+      color: container.dataset.color!,
+      icon: container.dataset.icon!
+    };
+
+    // Setup API endpoints
+    setupApiEndpoints();
+
+    // Load configuration dari backend dengan error handling yang lebih lenient
+    try {
+      await Promise.all([
+        loadFieldsConfiguration(),
+        loadColumnsConfiguration()
+        //ini 
+      ]);
+    } catch (configError) {
+      console.warn('Failed to load some configurations, using defaults:', configError);
+      // Set default configurations jika gagal load
+      if (!fieldsConfig.length) {
+        fieldsConfig = getDefaultFields();
+      }
+      if (!columnsConfig.length) {
+        columnsConfig = getDefaultColumns();
+      }
+    }
+
+    // Setup UI
+    setupUI();
+    setupEventListeners();
+    
+    // Initialize DataTable (jika gagal, tetap lanjut tanpa error state)
+    try {
+      await initializeDataTable();
+    } catch (tableError) {
+      console.warn('DataTable initialization failed, but continuing:', tableError);
+    }
+
+    // Langsung show main content
+    showMainContent();
+
+    console.log('App initialized successfully');
+
+  } catch (error) {
+    console.error('Failed to initialize app:', error);
+    
+    // Langsung redirect ke login jika auth error, tanpa show error state
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    if (errorMessage === 'NO_TOKEN' || 
+        errorMessage === 'UNAUTHORIZED' || 
+        errorMessage.includes('401')) {
+      redirectToLogin();
+      return;
+    }
+    
+    // Untuk error lain, tetap show main content dengan default config
+    console.warn('Using fallback initialization');
+    showMainContentWithDefaults();
+  }
+}
+function showMainContentWithDefaults(): void {
+  // Set default config jika belum ada
+  if (!appConfig) {
+    const container = document.getElementById('app-container');
+    appConfig = {
+      module: container?.dataset.module || 'default',
+      submodule: container?.dataset.submodule || 'default',
+      title: container?.dataset.title || 'Data',
+      color: container?.dataset.color || 'blue',
+      icon: container?.dataset.icon || 'fas fa-table'
+    };
+  }
+
+  if (!fieldsConfig.length) {
+    fieldsConfig = getDefaultFields();
+  }
+  if (!columnsConfig.length) {
+    columnsConfig = getDefaultColumns();
+  }
+
+  setupUI();
+  setupEventListeners();
+  showMainContent();
+}
+
+// Default configurations untuk fallback
+function getDefaultFields(): FieldDefinition[] {
+  return [
+    { name: 'name', type: 'text', label: 'Nama', required: true },
+    { name: 'description', type: 'textarea', label: 'Deskripsi' },
+    { name: 'created_at', type: 'date', label: 'Tanggal Dibuat' }
+  ];
+}
+
+function getDefaultColumns(): ColumnDefinition[] {
+  return [
+    { name: 'id', data: 'id', title: 'ID', type: 'number', sortable: true },
+    { name: 'name', data: 'name', title: 'Nama', type: 'text', sortable: true },
+    { name: 'description', data: 'description', title: 'Deskripsi', type: 'text' },
+    { name: 'created_at', data: 'created_at', title: 'Dibuat', type: 'date', sortable: true }
+  ];
+}
+
+// Modifikasi fungsi loadFieldsConfiguration untuk tidak throw error
+async function loadFieldsConfiguration(): Promise<void> {
+  try {
+    const response = await makeAuthenticatedRequest(apiEndpoints.fields);
+
+    if (!response.ok) {
+      console.warn(`Failed to load fields: ${response.status} ${response.statusText}`);
+      return; // Return tanpa throw error
+    }
+
+    const data = await response.json();
+    fieldsConfig = data.data || data;
+    
+    console.log('Fields configuration loaded:', fieldsConfig);
+  } catch (error) {
+    console.warn('Error loading fields, will use defaults:', error);
+    // Tidak throw error, biarkan app tetap jalan
+  }
+}
+
+// Enhanced API call wrapper with better error handling
+async function makeAuthenticatedRequest(url: string, options: RequestInit = {}): Promise<Response> {
+  try {
+    const headers = {
+      ...getAuthHeaders(),
+      ...options.headers
+    };
+
+    const response = await fetch(url, {
+      ...options,
+      headers
+    });
+
+    // Handle authentication errors immediately
+    if (response.status === 401 || response.status === 403) {
+      console.warn('Authentication failed in API request');
+      clearAuthData();
+      redirectToLogin();
+      throw new Error('UNAUTHORIZED');
+    }
+
+    return response;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    
+    if (errorMessage === 'NO_TOKEN') {
+      redirectToLogin();
+      throw error;
+    }
+    
+    throw error;
+  }
+}
+  function setupApiEndpoints(): void {
+    const base = `https://pengmas.hipmi-tup.com/dashboard/${appConfig.module}/${appConfig.submodule}`;
+    
+    apiEndpoints = {
+      base,
+      fields: `${base}/fields`,
+      columns: `${base}/columns`, 
+      list: base,
+      create: base,
+      show: `${base}/{id}`,
+      update: `${base}/{id}`,
+      delete: `${base}/{id}`
+      //ii
+    };
+  }
+
+  async function loadColumnsConfiguration(): Promise<void> {
+  try {
+    const response = await makeAuthenticatedRequest(apiEndpoints.columns);
+
+    if (!response.ok) {
+      console.warn(`Failed to load columns: ${response.status} ${response.statusText}`);
+      return; // Return tanpa throw error
+    }
+
+    const data = await response.json();
+    columnsConfig = data.data || data;
+    
+    console.log('Columns configuration loaded:', columnsConfig);
+  } catch (error) {
+    console.warn('Error loading columns, will use defaults:', error);
+    // Tidak throw error, biarkan app tetap jalan
+  }
+}
+
+  async function loadExportLibraries(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    // Load SheetJS for Excel export
+    if (typeof (window as any).XLSX === 'undefined') {
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+      script.onload = () => {
+        loadPDFLibrary().then(resolve).catch(reject);
+      };
+      script.onerror = reject;
+      document.head.appendChild(script);
+    } else {
+      loadPDFLibrary().then(resolve).catch(reject);
+    }
+  });
+}
+
+
+async function loadPDFLibrary(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (typeof (window as any).jsPDF === 'undefined') {
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+      script.onload = () => {
+        // Load autoTable plugin for jsPDF
+        const autoTableScript = document.createElement('script');
+        autoTableScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js';
+        autoTableScript.onload = () => resolve();
+        autoTableScript.onerror = reject;
+        document.head.appendChild(autoTableScript);
+      };
+      script.onerror = reject;
+      document.head.appendChild(script);
+    } else {
+      resolve();
+    }
+  });
+}
+
+async function exportToExcel(): Promise<void> {
+  try {
+    // Show loading state
+    const exportButton = document.getElementById('btn-export-excel') as HTMLButtonElement;
+    const originalContent = exportButton.innerHTML;
+    exportButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Exporting...';
+    exportButton.disabled = true;
+
+    // Load export libraries if not already loaded
+    await loadExportLibraries();
+
+    // Get all data from server (not just current page)
+    const allData = await fetchAllData();
+    
+    if (!allData || allData.length === 0) {
+      throw new Error('No data available for export');
+    }
+
+    // Prepare data for Excel export
+    const exportData = prepareExportData(allData);
+    
+    // Create workbook
+    const wb = (window as any).XLSX.utils.book_new();
+    
+    // Create worksheet
+    const ws = (window as any).XLSX.utils.json_to_sheet(exportData);
+    
+    // Set column widths
+    const columnWidths = columnsConfig.map(col => ({ wch: getColumnWidth(col) }));
+    ws['!cols'] = columnWidths;
+    
+    // Apply styling (basic)
+    const range = (window as any).XLSX.utils.decode_range(ws['!ref']);
+    
+    // Style header row
+    for (let col = range.s.c; col <= range.e.c; col++) {
+      const cellAddress = (window as any).XLSX.utils.encode_cell({ r: 0, c: col });
+      if (ws[cellAddress]) {
+        ws[cellAddress].s = {
+          fill: { fgColor: { rgb: "4F46E5" } },
+          font: { color: { rgb: "FFFFFF" }, bold: true },
+          alignment: { horizontal: "center", vertical: "center" }
+        };
+      }
+    }
+    
+    // Add worksheet to workbook
+    const sheetName = `${appConfig.title} - ${appConfig.submodule.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}`;
+    (window as any).XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    
+    // Add metadata worksheet
+    const metaData = [
+      { Property: 'Exported By', Value: 'Dynamic Data Table System' },
+      { Property: 'Export Date', Value: new Date().toLocaleString('id-ID') },
+      { Property: 'Total Records', Value: allData.length },
+      { Property: 'Module', Value: appConfig.title },
+      { Property: 'Submodule', Value: appConfig.submodule }
+    ];
+    
+    const metaWs = (window as any).XLSX.utils.json_to_sheet(metaData);
+    (window as any).XLSX.utils.book_append_sheet(wb, metaWs, 'Export Info');
+    
+    // Generate filename
+    const timestamp = new Date().toISOString().split('T')[0];
+    const filename = `${appConfig.module}_${appConfig.submodule}_${timestamp}.xlsx`;
+    
+    // Write and download file
+    (window as any).XLSX.writeFile(wb, filename);
+    
+    // Show success message
+    showNotification('Data berhasil diekspor ke Excel!', 'success');
+
+  } catch (error) {
+    console.error('Error exporting to Excel:', error);
+    showNotification('Gagal mengekspor data ke Excel: ' + (error instanceof Error ? error.message : 'Unknown error'), 'error');
+  } finally {
+    // Reset button state
+    const exportButton = document.getElementById('btn-export-excel') as HTMLButtonElement;
+    exportButton.innerHTML = '<i class="fas fa-file-excel mr-2"></i><span class="hidden sm:inline">Export Excel</span><span class="sm:hidden">Excel</span>';
+    exportButton.disabled = false;
+  }
+}
+
+async function exportToPDF(): Promise<void> {
+  try {
+    // Show loading state
+    const exportButton = document.getElementById('btn-export-pdf') as HTMLButtonElement;
+    const originalContent = exportButton?.innerHTML || '';
+    if (exportButton) {
+      exportButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Exporting...';
+      exportButton.disabled = true;
+    }
+
+    // Load export libraries if not already loaded
+    await loadExportLibraries();
+
+    // Get all data from server
+    const allData = await fetchAllData();
+    
+    if (!allData || allData.length === 0) {
+      throw new Error('No data available for export');
+    }
+
+    // Initialize jsPDF
+    const { jsPDF } = (window as any).jspdf;
+    const doc = new jsPDF('l', 'mm', 'a4'); // landscape orientation
+
+    // Add title
+    const title = `${appConfig.title} - ${appConfig.submodule.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}`;
+    doc.setFontSize(16);
+    doc.setTextColor(79, 70, 229); // Blue color matching theme
+    doc.text(title, 20, 20);
+
+    // Add export info
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Exported on: ${new Date().toLocaleString('id-ID')}`, 20, 30);
+    doc.text(`Total Records: ${allData.length}`, 20, 36);
+
+    // Prepare table data
+    const tableColumns = columnsConfig
+      .filter(col => col.data !== 'id') // Exclude ID column for cleaner PDF
+      .map(col => col.title);
+
+    const tableRows = allData.map(row => 
+      columnsConfig
+        .filter(col => col.data !== 'id')
+        .map(col => formatCellForPDF(row[col.data], col))
+    );
+
+    // Generate PDF table
+    (doc as any).autoTable({
+      head: [tableColumns],
+      body: tableRows,
+      startY: 45,
+      styles: {
+        fontSize: 8,
+        cellPadding: 3,
+        overflow: 'linebreak',
+        valign: 'middle'
+      },
+      headStyles: {
+        fillColor: [79, 70, 229], // Blue header
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        halign: 'center'
+      },
+      alternateRowStyles: {
+        fillColor: [248, 250, 252] // Light gray for alternate rows
+      },
+      columnStyles: getColumnStylesForPDF(),
+      didDrawPage: function (data: any) {
+        // Add page numbers
+        const pageCount = doc.internal.getNumberOfPages();
+        const currentPage = data.pageNumber;
+        doc.setFontSize(8);
+        doc.setTextColor(100);
+        doc.text(
+          `Page ${currentPage} of ${pageCount}`,
+          data.settings.margin.left,
+          doc.internal.pageSize.height - 10
+        );
+      }
+    });
+
+    // Generate filename
+    const timestamp = new Date().toISOString().split('T')[0];
+    const filename = `${appConfig.module}_${appConfig.submodule}_${timestamp}.pdf`;
+
+    // Save PDF
+    doc.save(filename);
+
+    // Show success message
+    showNotification('Data berhasil diekspor ke PDF!', 'success');
+
+  } catch (error) {
+    console.error('Error exporting to PDF:', error);
+    showNotification('Gagal mengekspor data ke PDF: ' + (error instanceof Error ? error.message : 'Unknown error'), 'error');
+  } finally {
+    // Reset button state
+    const exportButton = document.getElementById('btn-export-pdf') as HTMLButtonElement;
+    if (exportButton) {
+      exportButton.innerHTML = '<i class="fas fa-file-pdf mr-2"></i><span class="hidden sm:inline">Export PDF</span><span class="sm:hidden">PDF</span>';
+      exportButton.disabled = false;
+    }
+  }
+}
+
+async function fetchAllData(): Promise<any[]> {
+  try {
+    // Get current filters
+    const filters: any = {};
+    
+    const dateFrom = (document.getElementById('filter-date-from') as HTMLInputElement)?.value;
+    const dateTo = (document.getElementById('filter-date-to') as HTMLInputElement)?.value;
+    
+    if (dateFrom) filters.date_from = dateFrom;
+    if (dateTo) filters.date_to = dateTo;
+    
+    // Add field-specific filters
+    fieldsConfig.forEach(field => {
+      if (field.options) {
+        const filterValue = (document.getElementById(`filter-${field.name}`) as HTMLSelectElement)?.value;
+        if (filterValue) filters[field.name] = filterValue;
+      }
+    });
+
+    // Build query string
+    const queryParams = new URLSearchParams({
+      ...filters,
+      per_page: '1000', // Get large number of records
+      export: '1' // Indicate this is for export
+    });
+
+    const response = await makeAuthenticatedRequest(`${apiEndpoints.list}?${queryParams}`);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch data: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return result.data || result;
+
+  } catch (error) {
+    console.error('Error fetching all data:', error);
+    throw error;
+  }
+}
+
+function prepareExportData(data: any[]): any[] {
+  return data.map(row => {
+    const exportRow: any = {};
+    
+    columnsConfig.forEach(col => {
+      let value = row[col.data];
+      
+      // Format values based on column type
+      if (col.type === 'currency' && value != null) {
+        value = formatCurrency(value);
+      } else if (col.type === 'date' && value) {
+        value = formatDate(value);
+      } else if (col.type === 'boolean') {
+        value = value ? 'Ya' : 'Tidak';
+      } else if (value == null) {
+        value = '-';
+      }
+      
+      exportRow[col.title] = value;
+    });
+    
+    return exportRow;
+  });
+}
+
+function getColumnWidth(col: ColumnDefinition): number {
+  // Return appropriate column width based on column type and title length
+  if (col.type === 'currency') return 15;
+  if (col.type === 'date') return 12;
+  if (col.type === 'boolean') return 8;
+  if (col.title.length > 20) return 25;
+  if (col.title.length > 15) return 20;
+  return 15;
+}
+
+function getColumnStylesForPDF(): any {
+  const styles: any = {};
+  
+  columnsConfig.forEach((col, index) => {
+    if (col.data === 'id') return; // Skip ID column
+    
+    const adjustedIndex = columnsConfig.findIndex(c => c.data === col.data && c.data !== 'id');
+    
+    if (col.type === 'currency') {
+      styles[adjustedIndex] = { halign: 'right' };
+    } else if (col.type === 'date' || col.type === 'datetime') {
+      styles[adjustedIndex] = { halign: 'center' };
+    } else if (col.type === 'boolean') {
+      styles[adjustedIndex] = { halign: 'center' };
+    }
+  });
+  
+  return styles;
+}
+
+function formatCellForPDF(value: any, col: ColumnDefinition): string {
+  if (value == null || value === '') return '-';
+  
+  switch (col.type) {
+    case 'currency':
+      return formatCurrency(value);
+    case 'date':
+      return formatDate(value);
+    case 'boolean':
+      return value ? 'Ya' : 'Tidak';
+    default:
+      return String(value);
+  }
+}
+
+function showNotification(message: string, type: 'success' | 'error' = 'success'): void {
+  // Create notification element
+  const notification = document.createElement('div');
+  notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 transform translate-x-full ${
+    type === 'success' 
+      ? 'bg-green-500 text-white' 
+      : 'bg-red-500 text-white'
+  }`;
+  
+  notification.innerHTML = `
+    <div class="flex items-center">
+      <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} mr-2"></i>
+      <span>${message}</span>
+      <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  `;
+  
+  // Add to page
+  document.body.appendChild(notification);
+  
+  // Animate in
+  setTimeout(() => {
+    notification.classList.remove('translate-x-full');
+  }, 100);
+  
+  // Auto remove after 5 seconds
+  setTimeout(() => {
+    notification.classList.add('translate-x-full');
+    setTimeout(() => {
+      notification.remove();
+    }, 300);
+  }, 5000);
+}
+
+
+  function setupUI(): void {
+    // Setup page title
+    const pageTitle = document.getElementById('page-title');
+    if (pageTitle) {
+      pageTitle.innerHTML = `
+        <i class="${appConfig.icon} mr-3 text-${appConfig.color}-600"></i>
+        <span class="truncate">${appConfig.title} - ${appConfig.submodule.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</span>
+      `;
+    }
+
+    // Setup stats cards
+    setupStatsCards();
+
+    // Setup filters
+    setupFilters();
+  }
+
+  function setupStatsCards(): void {
+    const statsContainer = document.getElementById('stats-cards');
+    if (!statsContainer) return;
+
+    statsContainer.innerHTML = `
+      <div class="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-lg card-hover">
+        <div class="flex items-center justify-between">
+          <div class="flex-1 min-w-0">
+            <p class="text-gray-600 text-xs md:text-sm font-medium mb-1">Total Records</p>
+            <p class="text-xl md:text-3xl font-bold text-${appConfig.color}-600 truncate" id="total-records">0</p>
+          </div>
+          <div class="w-12 h-12 md:w-16 md:h-16 bg-${appConfig.color}-100 rounded-full flex items-center justify-center ml-3 flex-shrink-0">
+            <i class="fas fa-database text-${appConfig.color}-600 text-lg md:text-2xl"></i>
+          </div>
+        </div>
+      </div>
+      
+      <div class="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-lg card-hover">
+        <div class="flex items-center justify-between">
+          <div class="flex-1 min-w-0">
+            <p class="text-gray-600 text-xs md:text-sm font-medium mb-1">This Month</p>
+            <p class="text-xl md:text-3xl font-bold text-green-600 truncate" id="month-records">0</p>
+          </div>
+          <div class="w-12 h-12 md:w-16 md:h-16 bg-green-100 rounded-full flex items-center justify-center ml-3 flex-shrink-0">
+            <i class="fas fa-calendar text-green-600 text-lg md:text-2xl"></i>
+          </div>
+        </div>
+      </div>
+      
+      <div class="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-lg card-hover">
+      <div class="flex items-center justify-between">
+        <div class="flex-1 min-w-0">
+          <p class="text-gray-600 text-xs md:text-sm font-medium mb-1">Total Uang Masuk</p>
+          <p class="text-xl md:text-3xl font-bold text-green-600 truncate" id="total-income">Rp 0</p>
+        </div>
+        <div class="w-12 h-12 md:w-16 md:h-16 bg-green-100 rounded-full flex items-center justify-center ml-3 flex-shrink-0">
+          <i class="fas fa-arrow-up text-green-600 text-lg md:text-2xl"></i>
+        </div>
+      </div>
+    </div>
+    
+    <div class="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-lg card-hover">
+      <div class="flex items-center justify-between">
+        <div class="flex-1 min-w-0">
+          <p class="text-gray-600 text-xs md:text-sm font-medium mb-1">Total Uang Keluar</p>
+          <p class="text-xl md:text-3xl font-bold text-red-600 truncate" id="total-expense">Rp 0</p>
+        </div>
+        <div class="w-12 h-12 md:w-16 md:h-16 bg-red-100 rounded-full flex items-center justify-center ml-3 flex-shrink-0">
+          <i class="fas fa-arrow-down text-red-600 text-lg md:text-2xl"></i>
+        </div>
+      </div>
+    </div>
+      <div class="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-lg card-hover sm:col-span-2 lg:col-span-1">
+        <div class="flex items-center justify-between">
+          <div class="flex-1 min-w-0">
+            <p class="text-gray-600 text-xs md:text-sm font-medium mb-1">Last Updated</p>
+            <p class="text-sm md:text-base font-medium text-gray-800 truncate" id="last-updated">-</p>
+          </div>
+          <div class="w-12 h-12 md:w-16 md:h-16 bg-blue-100 rounded-full flex items-center justify-center ml-3 flex-shrink-0">
+            <i class="fas fa-clock text-blue-600 text-lg md:text-2xl"></i>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function setupFilters(): void {
+    const filterContainer = document.getElementById('filter-container');
+    if (!filterContainer || !fieldsConfig.length) return;
+
+    // Create filters based on field configuration
+    let filtersHTML = '';
+
+    // Date range filters (common)
+    filtersHTML += `
+      <div>
+        <label class="block text-gray-700 text-sm font-medium mb-2">
+          <i class="fas fa-calendar-alt mr-1 text-gray-500"></i>
+          Dari Tanggal
+        </label>
+        <input type="date" id="filter-date-from" 
+               class="w-full px-3 py-2 md:px-4 md:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${appConfig.color}-500 focus:border-transparent transition-all duration-200 text-sm md:text-base" />
+      </div>
+      
+      <div>
+        <label class="block text-gray-700 text-sm font-medium mb-2">
+          <i class="fas fa-calendar-check mr-1 text-gray-500"></i>
+          Sampai Tanggal
+        </label>
+        <input type="date" id="filter-date-to" 
+               class="w-full px-3 py-2 md:px-4 md:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${appConfig.color}-500 focus:border-transparent transition-all duration-200 text-sm md:text-base" />
+      </div>
+    `;
+
+    // Add field-specific filters for enum/select fields
+    fieldsConfig.forEach(field => {
+      if (field.options && field.options.length > 0) {
+        filtersHTML += `
+          <div>
+            <label class="block text-gray-700 text-sm font-medium mb-2">
+              <i class="fas fa-filter mr-1 text-gray-500"></i>
+              ${field.label}
+            </label>
+            <select id="filter-${field.name}" 
+                    class="w-full px-3 py-2 md:px-4 md:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${appConfig.color}-500 focus:border-transparent transition-all duration-200 text-sm md:text-base">
+              <option value="">Semua ${field.label}</option>
+              ${field.options.map(opt => `<option value="${opt}">${opt.charAt(0).toUpperCase() + opt.slice(1)}</option>`).join('')}
+            </select>
+          </div>
+        `;
+      }
+    });
+
+    // Reset button
+    filtersHTML += `
+      <div class="flex flex-col justify-end">
+        <button onclick="resetFilters()" 
+                class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-all duration-200 text-sm whitespace-nowrap">
+          <i class="fas fa-refresh mr-2"></i>Reset Filter
+        </button>
+      </div>
+    `;
+
+    filterContainer.innerHTML = filtersHTML;
+  }
+
+ async function initializeDataTable(): Promise<void> {
+  try {
+    // Destroy existing table if exists
+    if (dataTable) {
+      dataTable.destroy();
+      dataTable = null;
+    }
+
+    // Build columns configuration for DataTables
+    const columns: DataTableColumn[] = columnsConfig.map(col => ({
+      data: col.data,
+      title: col.title,
+      orderable: col.sortable !== false,
+      searchable: col.searchable !== false,
+      className: getColumnClassName(col),
+      render: getColumnRenderer(col)
+    }));
+
+    // Add action column
+    columns.push({
+      data: null,
+      title: 'Actions',
+      orderable: false,
+      searchable: false,
+      className: 'text-center',
+      render: function(data: any, type: string, row: any) {
+        return `
+          <div class="btn-group flex gap-1 justify-center">
+            <button onclick="editRecord('${row.id}')" 
+                    class="btn btn-sm btn-outline-primary" 
+                    title="Edit">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button onclick="deleteRecord('${row.id}')" 
+                    class="btn btn-sm btn-outline-danger" 
+                    title="Delete">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        `;
+      }
+    });
+
+    // Load DataTables library if not loaded
+    await loadDataTablesLibrary();
+
+    // Initialize DataTable dengan error handling yang lebih baik
+    dataTable = (window as any).$('#dynamic-table').DataTable({
+      processing: true,
+      serverSide: true,
+      ajax: {
+        url: apiEndpoints.list,
+        type: 'GET',
+        headers: getAuthHeaders(),
+        data: function(d: any) {
+          // Add custom filters
+          const dateFrom = (document.getElementById('filter-date-from') as HTMLInputElement)?.value;
+          const dateTo = (document.getElementById('filter-date-to') as HTMLInputElement)?.value;
+          
+          if (dateFrom) d.date_from = dateFrom;
+          if (dateTo) d.date_to = dateTo;
+          
+          // Add field-specific filters
+          fieldsConfig.forEach(field => {
+            if (field.options) {
+              const filterValue = (document.getElementById(`filter-${field.name}`) as HTMLSelectElement)?.value;
+              if (filterValue) d[field.name] = filterValue;
+            }
+          });
+          
+          return d;
+        },
+        error: function(xhr: any, error: string, code: string) {
+          console.warn('DataTable AJAX error (non-critical):', error, code);
+          // Jangan tampilkan error state, biarkan DataTable handle dengan "No data available"
+        }
+      },
+      columns,
+      responsive: true,
+      pageLength: 10,
+      lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+      dom: '<"modern-datatable-header"<"search-container"f><"length-container"l>>rtip',
+      language: {
+        url: "https://cdn.datatables.net/plug-ins/1.13.5/i18n/id.json",
+        searchPlaceholder: "Cari data...",
+        search: "",
+        lengthMenu: "Tampilkan _MENU_ data",
+        processing: "Memuat data...",
+        emptyTable: "Tidak ada data tersedia", // Pesan ketika tidak ada data
+        zeroRecords: "Tidak ditemukan data yang sesuai", // Pesan ketika tidak ada hasil pencarian
+        info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
+        infoEmpty: "Menampilkan 0 sampai 0 dari 0 data",
+        infoFiltered: "(disaring dari _MAX_ total data)"
+      },
+      drawCallback: function(settings: any) {
+        updateStats(settings);
+      }
+    });
+
+    console.log('DataTable initialized successfully');
+
+  } catch (error) {
+    console.warn('Error initializing DataTable (non-critical):', error);
+    // Jangan throw error, biarkan aplikasi tetap berjalan
+    // DataTable akan menampilkan "No data available" secara default
+  }
+}
+  async function loadDataTablesLibrary(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      // Check if jQuery is loaded
+      if (typeof (window as any).$ === 'undefined') {
+        const jquery = document.createElement('script');
+        jquery.src = 'https://code.jquery.com/jquery-3.6.0.min.js';
+        jquery.onload = () => {
+          loadDataTablesScripts().then(resolve).catch(reject);
+        };
+        jquery.onerror = reject;
+        document.head.appendChild(jquery);
+      } else if (typeof (window as any).$.fn.DataTable === 'undefined') {
+        loadDataTablesScripts().then(resolve).catch(reject);
+      } else {
+        resolve();
+      }
+    });
+  }
+
+  async function loadDataTablesScripts(): Promise<void> {
+    const scripts = [
+      'https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js',
+      'https://cdn.datatables.net/responsive/2.4.1/js/dataTables.responsive.min.js'
+    ];
+
+    for (const src of scripts) {
+      await new Promise<void>((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.onload = () => resolve();
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+    }
+
+    // Load CSS
+    const css = document.createElement('link');
+    css.rel = 'stylesheet';
+    css.href = 'https://cdn.datatables.net/1.13.5/css/jquery.dataTables.min.css';
+    document.head.appendChild(css);
+
+    const responsiveCss = document.createElement('link');
+    responsiveCss.rel = 'stylesheet'; 
+    responsiveCss.href = 'https://cdn.datatables.net/responsive/2.4.1/css/responsive.dataTables.min.css';
+    document.head.appendChild(responsiveCss);
+  }
+
+  function getColumnClassName(col: ColumnDefinition): string {
+    let className = '';
+    
+    if (col.type === 'number' || col.type === 'currency') {
+      className += 'text-right ';
+    } else if (col.type === 'date' || col.type === 'datetime') {
+      className += 'text-center ';
+    }
+    
+    if (col.width) {
+      className += `w-${col.width} `;
+    }
+    
+    return className.trim();
+  }
+
+  function getColumnRenderer(col: ColumnDefinition): Function | undefined {
+    if (col.type === 'currency') {
+      return function(data: any, type: string, row: any) {
+        if (type === 'display' || type === 'type') {
+          return formatCurrency(data);
+        }
+        return data;
+      };
+    }
+    
+    if (col.type === 'date') {
+      return function(data: any, type: string, row: any) {
+        if (type === 'display' || type === 'type') {
+          return formatDate(data);
+        }
+        return data;
+      };
+    }
+    
+    if (col.type === 'boolean') {
+      return function(data: any, type: string, row: any) {
+        if (type === 'display' || type === 'type') {
+          return data ? '<span class="badge badge-success">Ya</span>' : '<span class="badge badge-secondary">Tidak</span>';
+        }
+        return data;
+      };
+    }
+    
+    return undefined;
+  }
+
+ // Replace the setupEventListeners function in your original script with this updated version
+
+function setupEventListeners(): void {
+  // Add button
+  document.getElementById('btn-add')?.addEventListener('click', () => openModal());
+  
+  // Export buttons - Updated with PDF export
+  document.getElementById('btn-export-excel')?.addEventListener('click', exportToExcel);
+  document.getElementById('btn-export-pdf')?.addEventListener('click', exportToPDF);
+  document.getElementById('btn-print')?.addEventListener('click', printData);
+  
+  // Filter changes
+  document.getElementById('filter-date-from')?.addEventListener('change', applyFilters);
+  document.getElementById('filter-date-to')?.addEventListener('change', applyFilters);
+  
+  // Field-specific filters
+  fieldsConfig.forEach(field => {
+    if (field.options) {
+      document.getElementById(`filter-${field.name}`)?.addEventListener('change', applyFilters);
+    }
+  });
+  
+  // Form submission
+  document.getElementById('data-form')?.addEventListener('submit', handleFormSubmit);
+  
+  // Keyboard shortcuts for export functions
+  document.addEventListener('keydown', (e) => {
+    // Ctrl+E for Excel export
+    if (e.ctrlKey && e.key === 'e') {
+      e.preventDefault();
+      exportToExcel();
+    }
+    // Ctrl+P for PDF export (override default print)
+    if (e.ctrlKey && e.key === 'p') {
+      e.preventDefault();
+      exportToPDF();
+    }
+    // Ctrl+Shift+P for print
+    if (e.ctrlKey && e.shiftKey && e.key === 'P') {
+      e.preventDefault();
+      printData();
+    }
+  });
+}
+
+  function applyFilters(): void {
+    if (dataTable) {
+      dataTable.ajax.reload();
+    }
+  }
+
+  function resetFilters(): void {
+    // Reset date filters
+    (document.getElementById('filter-date-from') as HTMLInputElement).value = '';
+    (document.getElementById('filter-date-to') as HTMLInputElement).value = '';
+    
+    // Reset field filters
+    fieldsConfig.forEach(field => {
+      if (field.options) {
+        (document.getElementById(`filter-${field.name}`) as HTMLSelectElement).value = '';
+      }
+    });
+    
+    applyFilters();
+  }
+
+  function openModal(id?: string): void {
+    editingId = id || null;
+    
+    const modal = document.getElementById('data-modal');
+    const modalTitle = document.getElementById('modal-title');
+    
+    if (modalTitle) {
+      modalTitle.textContent = editingId ? `Edit ${appConfig.submodule}` : `Tambah ${appConfig.submodule}`;
+    }
+    
+    generateForm();
+    
+    if (editingId) {
+      loadRecordData(editingId);
+    }
+    
+    modal?.classList.remove('hidden');
+    modal?.classList.add('flex');
+  }
+
+  function closeModal(): void {
+    const modal = document.getElementById('data-modal');
+    const form = document.getElementById('data-form') as HTMLFormElement;
+    
+    modal?.classList.add('hidden');
+    modal?.classList.remove('flex');
+    form?.reset();
+    editingId = null;
+  }
+
+  function generateForm(): void {
+    const container = document.getElementById('form-fields');
+    if (!container || !fieldsConfig.length) return;
+
+    let formHTML = '';
+
+    fieldsConfig.forEach(field => {
+      const fieldId = `field-${field.name}`;
+      const isRequired = field.required ? 'required' : '';
+      const requiredMark = field.required ? '<span class="text-red-500">*</span>' : '';
+
+      formHTML += `<div class="form-group">`;
+      formHTML += `<label class="block text-gray-700 text-sm font-medium mb-2" for="${fieldId}">
+                     ${field.label} ${requiredMark}
+                   </label>`;
+
+      switch (field.type) {
+        case 'text':
+        case 'email':
+        case 'url':
+          formHTML += `<input type="${field.type}" id="${fieldId}" name="${field.name}" ${isRequired}
+                              class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${appConfig.color}-500 focus:border-transparent transition-all duration-200"
+                              placeholder="Masukkan ${field.label.toLowerCase()}" />`;
+          break;
+
+        case 'number':
+        case 'currency':
+          const step = field.type === 'currency' ? '1000' : '1';
+          const min = field.validation?.min || '0';
+          formHTML += `<input type="number" id="${fieldId}" name="${field.name}" ${isRequired}
+                              class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${appConfig.color}-500 focus:border-transparent transition-all duration-200"
+                              placeholder="0" step="${step}" min="${min}" />`;
+          break;
+
+        case 'date':
+          formHTML += `<input type="date" id="${fieldId}" name="${field.name}" ${isRequired}
+                              class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${appConfig.color}-500 focus:border-transparent transition-all duration-200" />`;
+          break;
+
+        case 'datetime':
+          formHTML += `<input type="datetime-local" id="${fieldId}" name="${field.name}" ${isRequired}
+                              class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${appConfig.color}-500 focus:border-transparent transition-all duration-200" />`;
+          break;
+
+        case 'select':
+          formHTML += `<select id="${fieldId}" name="${field.name}" ${isRequired}
+                              class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${appConfig.color}-500 focus:border-transparent transition-all duration-200">
+                         <option value="">Pilih ${field.label}</option>`;
+          if (field.options) {
+            field.options.forEach(option => {
+              formHTML += `<option value="${option}">${option.charAt(0).toUpperCase() + option.slice(1)}</option>`;
+            });
+          }
+          formHTML += `</select>`;
+          break;
+
+        case 'textarea':
+          formHTML += `<textarea id="${fieldId}" name="${field.name}" ${isRequired}
+                                class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${appConfig.color}-500 focus:border-transparent transition-all duration-200 resize-none"
+                                rows="3" placeholder="Masukkan ${field.label.toLowerCase()}"></textarea>`;
+          break;
+
+        case 'boolean':
+          formHTML += `<div class="flex items-center space-x-3">
+                         <input type="checkbox" id="${fieldId}" name="${field.name}" 
+                                class="w-4 h-4 text-${appConfig.color}-600 bg-gray-100 border-gray-300 rounded focus:ring-${appConfig.color}-500 focus:ring-2" />
+                         <label for="${fieldId}" class="text-sm font-medium text-gray-700">${field.label}</label>
+                       </div>`;
+          break;
+
+        default:
+          formHTML += `<input type="text" id="${fieldId}" name="${field.name}" ${isRequired}
+                              class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${appConfig.color}-500 focus:border-transparent transition-all duration-200"
+                              placeholder="Masukkan ${field.label.toLowerCase()}" />`;
+      }
+
+      formHTML += `</div>`;
+    });
+
+    container.innerHTML = formHTML;
+  }
+
+  async function loadRecordData(id: string): Promise<void> {
+    try {
+      const response = await fetch(apiEndpoints.show.replace('{id}', id), {
+        headers: getAuthHeaders()
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to load record: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const recordData = data.data || data;
+
+      // Populate form fields
+      fieldsConfig.forEach(field => {
+        const fieldElement = document.getElementById(`field-${field.name}`) as HTMLInputElement;
+        if (fieldElement && recordData[field.name] !== undefined) {
+          if (field.type === 'boolean') {
+            (fieldElement as HTMLInputElement).checked = !!recordData[field.name];
+          } else {
+            fieldElement.value = recordData[field.name];
+          }
+        }
+      });
+
+    } catch (error) {
+      console.error('Error loading record data:', error);
+      alert('Gagal memuat data record');
+    }
+  }
+
+  async function handleFormSubmit(event: Event): Promise<void> {
+    event.preventDefault();
+    
+    const form = event.target as HTMLFormElement;
+    const formData = new FormData(form);
+    const submitButton = document.getElementById('btn-submit') as HTMLButtonElement;
+    
+    try {
+      // Show loading state
+      submitButton.disabled = true;
+      submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Menyimpan...';
+
+      // Prepare data
+      const data: any = {};
+      fieldsConfig.forEach(field => {
+        const value = formData.get(field.name);
+        if (field.type === 'boolean') {
+          data[field.name] = !!value;
+        } else if (field.type === 'number' || field.type === 'currency') {
+          data[field.name] = value ? parseFloat(value as string) : null;
+        } else {
+          data[field.name] = value || null;
+        }
+      });
+
+      // Determine method and endpoint
+      const isEdit = !!editingId;
+      const method = isEdit ? 'PUT' : 'POST';
+      const endpoint = isEdit ? apiEndpoints.update.replace('{id}', editingId!) : apiEndpoints.create;
+
+      // Make API call
+      const response = await fetch(endpoint, {
+        method,
+        headers: getAuthHeaders(),
+        body: JSON.stringify(data)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP ${response.status}`);
+      }
+
+      // Success
+      alert(isEdit ? 'Data berhasil diperbarui!' : 'Data berhasil ditambahkan!');
+      closeModal();
+      
+      if (dataTable) {
+        dataTable.ajax.reload();
+      }
+
+    } catch (error) {
+      console.error('Error saving data:', error);
+      alert('Gagal menyimpan data: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    } finally {
+      // Reset button state
+      submitButton.disabled = false;
+      submitButton.innerHTML = '<i class="fas fa-save mr-2"></i>Simpan';
+    }
+  }
+
+  async function editRecord(id: string): Promise<void> {
+    openModal(id);
+  }
+
+  async function deleteRecord(id: string): Promise<void> {
+    if (!confirm('Apakah Anda yakin ingin menghapus data ini?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(apiEndpoints.delete.replace('{id}', id), {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP ${response.status}`);
+      }
+
+      alert('Data berhasil dihapus!');
+      
+      if (dataTable) {
+        dataTable.ajax.reload();
+      }
+
+    } catch (error) {
+      console.error('Error deleting record:', error);
+      alert('Gagal menghapus data: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    }
+  }
+
+  function updateStats(settings: any): void {
+    const info = settings.json;
+    
+    // Update total records
+    const totalRecords = document.getElementById('total-records');
+    if (totalRecords && info) {
+      totalRecords.textContent = info.recordsTotal || '0';
+    }
+
+    // Update last updated
+    const lastUpdated = document.getElementById('last-updated');
+    if (lastUpdated) {
+      lastUpdated.textContent = new Date().toLocaleString('id-ID');
+    }
+  }
+
+  // Utility functions
+  function formatCurrency(amount: number): string {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount || 0);
+  }
+
+  function formatDate(dateString: string): string {
+    if (!dateString) return '-';
+    return new Date(dateString).toLocaleDateString('id-ID');
+  }
+
+  function showMainContent(): void {
+  // Langsung hide loading dan error state, show main content
+  document.getElementById('loading-state')?.classList.add('hidden');
+  document.getElementById('error-state')?.classList.add('hidden');
+  document.getElementById('main-content')?.classList.remove('hidden');
+}
+
+  // Hapus fungsi showLoadingState dan showErrorState atau buat mereka tidak melakukan apa-apa
+  function showLoadingState(): void {
+    // Tidak melakukan apa-apa, langsung ke main content
+    console.log('Loading state skipped');
+  }
+
+function showErrorState(message: string): void {
+  // Tidak menampilkan error state, langsung ke main content
+  console.warn('Error state skipped:', message);
+  showMainContent();
+}
+  // Print function (enhanced)
+// Enhanced Print function that shows all columns except ID and Actions
+async function printData(): Promise<void> {
+  try {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      throw new Error('Popup blocked. Please allow popups for this site.');
+    }
+
+    const title = `${appConfig.title} - ${appConfig.submodule.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}`;
+    
+    // Show loading state on print button
+    const printButton = document.getElementById('btn-print') as HTMLButtonElement;
+    const originalContent = printButton?.innerHTML || '';
+    if (printButton) {
+      printButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Preparing...';
+      printButton.disabled = true;
+    }
+
+    // Get all data for printing (not just current page)
+    const allData = await fetchAllData();
+    
+    if (!allData || allData.length === 0) {
+      throw new Error('No data available for printing');
+    }
+
+    // Filter columns to exclude ID and Actions
+    const printColumns = columnsConfig.filter(col => 
+      col.data !== 'id' && 
+      col.data !== 'actions' && 
+      col.name !== 'id' && 
+      col.name !== 'actions'
+    );
+
+    // Generate table HTML with proper formatting
+    let tableHTML = '<table><thead><tr>';
+    
+    // Add headers
+    printColumns.forEach(col => {
+      tableHTML += `<th>${col.title}</th>`;
+    });
+    tableHTML += '</tr></thead><tbody>';
+
+    // Add data rows
+    allData.forEach(row => {
+      tableHTML += '<tr>';
+      printColumns.forEach(col => {
+        let cellValue = row[col.data] || '';
+        
+        // Format cell values based on column type
+        if (col.type === 'currency' && cellValue != null) {
+          cellValue = formatCurrency(cellValue);
+        } else if (col.type === 'date' && cellValue) {
+          cellValue = formatDate(cellValue);
+        } else if (col.type === 'boolean') {
+          cellValue = cellValue ? 'Ya' : 'Tidak';
+        } else if (cellValue == null || cellValue === '') {
+          cellValue = '-';
+        }
+        
+        tableHTML += `<td>${cellValue}</td>`;
+      });
+      tableHTML += '</tr>';
+    });
+
+    tableHTML += '</tbody></table>';
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>${title} - Print</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              margin: 20px;
+              color: #333;
+              line-height: 1.4;
+            }
+            h1 {
+              color: #4F46E5;
+              text-align: center;
+              margin-bottom: 10px;
+              font-size: 24px;
+            }
+            .print-info {
+              text-align: center;
+              color: #666;
+              margin-bottom: 30px;
+              font-size: 14px;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 20px;
+              font-size: 12px;
+            }
+            th, td {
+              border: 1px solid #ddd;
+              padding: 6px 8px;
+              text-align: left;
+              vertical-align: top;
+            }
+            th {
+              background-color: #4F46E5;
+              color: white;
+              font-weight: bold;
+              text-align: center;
+            }
+            tr:nth-child(even) {
+              background-color: #f9f9f9;
+            }
+            
+            @media print {
+              body { 
+                margin: 0; 
+                font-size: 11px;
+              }
+              table {
+                font-size: 10px;
+              }
+              th, td {
+                padding: 4px 6px;
+              }
+              tr {
+                page-break-inside: avoid;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <h1>${title}</h1>
+          <div class="print-info">
+            <p><strong>Printed on:</strong> ${new Date().toLocaleString('id-ID')}</p>
+            <p><strong>Total Records:</strong> ${allData.length}</p>
+          </div>
+          ${tableHTML}
+        </body>
+      </html>
+    `);
+
+    printWindow.document.close();
+    printWindow.focus();
+    
+    // Wait for content to load, then print
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 1500);
+
+    // Show success notification
+    showNotification('Data berhasil disiapkan untuk dicetak!', 'success');
+
+  } catch (error) {
+    console.error('Error printing:', error);
+    showNotification('Gagal mencetak data: ' + (error instanceof Error ? error.message : 'Unknown error'), 'error');
+  } finally {
+    // Reset button state
+    const printButton = document.getElementById('btn-print') as HTMLButtonElement;
+    if (printButton) {
+      printButton.innerHTML = '<i class="fas fa-print mr-2"></i><span class="hidden sm:inline">Print</span><span class="sm:hidden">Print</span>';
+      printButton.disabled = false;
+    }
+  }
+}
+
+// Export these functions to global scope
+(window as any).exportToExcel = exportToExcel;
+(window as any).exportToPDF = exportToPDF;
+(window as any).printData = printData;
+
+  // Global functions for HTML onclick handlers
+  (window as any).editRecord = editRecord;
+  (window as any).deleteRecord = deleteRecord;
+  (window as any).openModal = openModal;
+  (window as any).closeModal = closeModal;
+  (window as any).resetFilters = resetFilters;
+  (window as any).initializeApp = initializeApp;
+
+  // Initialize when DOM is ready
+  document.addEventListener('DOMContentLoaded', initializeApp);
+
+  console.log('Dynamic DataTable script loaded');
+</script>
+
+<style>
+  /* Modern styles for the dynamic table */
+  .dynamic-datatable-container {
+    animation: slideInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  
+  @keyframes slideInUp {
+    from {
+      opacity: 0;
+      transform: translate3d(0, 30px, 0);
+    }
+    to {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
+  }
+
+  .card-hover {
+    transition: all 0.3s ease;
+  }
+  
+  .card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+
+  /* Form styles */
+  .form-group {
+    margin-bottom: 1rem;
+  }
+
+  .form-group:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Button styles */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 2px solid;
+    text-decoration: none;
+    cursor: pointer;
+    justify-content: center;
+  }
+
+  .btn-sm {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  .btn-outline-primary {
+    color: #3b82f6;
+    border-color: #3b82f6;
+    background: linear-gradient(135deg, #ffffff, #f8fafc);
+  }
+
+  .btn-outline-primary:hover {
+    color: #ffffff;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    border-color: #2563eb;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px -4px rgba(59, 130, 246, 0.4);
+  }
+
+  .btn-outline-danger {
+    color: #ef4444;
+    border-color: #ef4444;
+    background: linear-gradient(135deg, #ffffff, #fef2f2);
+  }
+
+  .btn-outline-danger:hover {
+    color: #ffffff;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    border-color: #dc2626;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px -4px rgba(239, 68, 68, 0.4);
+  }
+
+  /* Badge styles */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+  }
+
+  .badge-success {
+    color: #059669;
+    background-color: #d1fae5;
+  }
+
+  .badge-secondary {
+    color: #6b7280;
+    background-color: #f3f4f6;
+  }
+
+  /* DataTable enhancements */
+  .dataTables_wrapper {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  .modern-datatable-header {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+
+  @media (min-width: 640px) {
+    .modern-datatable-header {
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+    }
+  }
+
+  .search-container {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .search-container label {
+    display: none;
+  }
+
+  .search-container input {
+    width: 100%;
+    padding: 0.875rem 1.25rem 0.875rem 3rem !important;
+    border: 2px solid #e1e5e9 !important;
+    border-radius: 50px !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    color: #374151 !important;
+    background: #ffffff !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    margin: 0 !important;
+  }
+
+  .search-container input:focus {
+    outline: none !important;
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1), 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+    transform: translateY(-1px) !important;
+  }
+
+  .search-container::before {
+    content: "🔍";
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    font-size: 1.125rem;
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  .length-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  .length-container label {
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.875rem;
+    white-space: nowrap;
+  }
+
+  .length-container select {
+    padding: 0.625rem 2.5rem 0.625rem 1rem !important;
+    border: 2px solid #e1e5e9 !important;
+    border-radius: 0.75rem !important;
+    font-size: 0.875rem !important;
+    font-weight: 600 !important;
+    color: #374151 !important;
+    background: #ffffff url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") no-repeat right 0.75rem center/1rem !important;
+    appearance: none !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    cursor: pointer !important;
+    margin: 0 !important;
+  }
+
+  .length-container select:focus {
+    outline: none !important;
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1), 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+    transform: translateY(-1px) !important;
+  }
+
+  /* Responsive improvements */
+  @media (max-width: 768px) {
+    .modern-datatable-header {
+      padding: 1rem;
+    }
+
+    .search-container input {
+      font-size: 16px !important; /* Prevent zoom on iOS */
+    }
+
+    .btn {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.75rem;
+    }
+  }
+
+  /* Loading and error states */
+  #loading-state, #error-state {
+    min-height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Table responsive improvements */
+  .overflow-x-auto::-webkit-scrollbar {
+    height: 8px;
+  }
+  
+  .overflow-x-auto::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+  }
+  
+  .overflow-x-auto::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+  }
+  
+  .overflow-x-auto::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+</style>
