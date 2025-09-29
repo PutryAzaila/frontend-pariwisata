@@ -11,11 +11,11 @@ if (!validModules.includes(slug)) {
 }
 ---
 
-<AdminLayout title={`Tambah Usaha - ${slug}`}>
+<AdminLayout title={`Tambah Usaha - ${slug.charAt(0).toUpperCase() + slug.slice(1)}`}>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   
   <div class="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-    <!-- Header -->
+    Header
     <div class="bg-white shadow-sm border-b border-gray-100">
       <div class="max-w-full mx-auto px-6 lg:px-8 py-6">
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -72,6 +72,75 @@ if (!validModules.includes(slug)) {
 
       <!-- Full Width Container -->
       <div class="space-y-6">
+        <!-- Bottom Section - Tips & Action -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Quick Tips - Span 2 columns -->
+          <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="bg-gradient-to-r from-amber-400 to-orange-500 px-6 py-4">
+              <h3 class="text-lg font-semibold text-white flex items-center gap-3">
+                <div class="bg-white/20 p-2 rounded-lg">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                  </svg>
+                </div>
+                Tips Pengisian
+              </h3>
+            </div>
+            <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="flex items-start gap-3">
+                <div class="bg-blue-100 rounded-full p-2 mt-0.5 flex-shrink-0">
+                  <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
+                  </svg>
+                </div>
+                <p class="text-sm text-gray-700 leading-relaxed">Gunakan nama yang mudah dipahami untuk jenis usaha</p>
+              </div>
+              <div class="flex items-start gap-3">
+                <div class="bg-blue-100 rounded-full p-2 mt-0.5 flex-shrink-0">
+                  <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
+                  </svg>
+                </div>
+                <p class="text-sm text-gray-700 leading-relaxed">Nama parameter harus menggunakan underscore (contoh: jumlah_barang)</p>
+              </div>
+              <div class="flex items-start gap-3">
+                <div class="bg-blue-100 rounded-full p-2 mt-0.5 flex-shrink-0">
+                  <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
+                  </svg>
+                </div>
+                <p class="text-sm text-gray-700 leading-relaxed">Atur urutan parameter sesuai prioritas pengisian</p>
+              </div>
+              <div class="flex items-start gap-3">
+                <div class="bg-blue-100 rounded-full p-2 mt-0.5 flex-shrink-0">
+                  <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
+                  </svg>
+                </div>
+                <p class="text-sm text-gray-700 leading-relaxed">Gunakan validasi required untuk data wajib</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Button -->
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-6 flex flex-col justify-center h-full">
+              <button
+                type="button"
+                id="submit-btn"
+                disabled
+                class="w-full inline-flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-xl hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              >
+                <svg id="submit-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                <span id="submit-text">Simpan Jenis Usaha</span>
+              </button>
+              <p class="text-xs text-gray-500 text-center mt-4">Pastikan semua data sudah benar sebelum menyimpan</p>
+            </div>
+          </div>
+        </div>
+     
         <!-- Informasi Dasar - Full Width -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div class="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-5">
@@ -292,78 +361,11 @@ if (!validModules.includes(slug)) {
             </div>
           </div>
         </div>
-
-        <!-- Bottom Section - Tips & Action -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <!-- Quick Tips - Span 2 columns -->
-          <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div class="bg-gradient-to-r from-amber-400 to-orange-500 px-6 py-4">
-              <h3 class="text-lg font-semibold text-white flex items-center gap-3">
-                <div class="bg-white/20 p-2 rounded-lg">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-                  </svg>
-                </div>
-                Tips Pengisian
-              </h3>
-            </div>
-            <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div class="flex items-start gap-3">
-                <div class="bg-blue-100 rounded-full p-2 mt-0.5 flex-shrink-0">
-                  <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
-                  </svg>
-                </div>
-                <p class="text-sm text-gray-700 leading-relaxed">Gunakan nama yang mudah dipahami untuk jenis usaha</p>
-              </div>
-              <div class="flex items-start gap-3">
-                <div class="bg-blue-100 rounded-full p-2 mt-0.5 flex-shrink-0">
-                  <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
-                  </svg>
-                </div>
-                <p class="text-sm text-gray-700 leading-relaxed">Nama parameter harus menggunakan underscore (contoh: jumlah_barang)</p>
-              </div>
-              <div class="flex items-start gap-3">
-                <div class="bg-blue-100 rounded-full p-2 mt-0.5 flex-shrink-0">
-                  <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
-                  </svg>
-                </div>
-                <p class="text-sm text-gray-700 leading-relaxed">Atur urutan parameter sesuai prioritas pengisian</p>
-              </div>
-              <div class="flex items-start gap-3">
-                <div class="bg-blue-100 rounded-full p-2 mt-0.5 flex-shrink-0">
-                  <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
-                  </svg>
-                </div>
-                <p class="text-sm text-gray-700 leading-relaxed">Gunakan validasi required untuk data wajib</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Action Button -->
-          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div class="p-6 flex flex-col justify-center h-full">
-              <button
-                type="button"
-                id="submit-btn"
-                disabled
-                class="w-full inline-flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-xl hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-              >
-                <svg id="submit-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                </svg>
-                <span id="submit-text">Simpan Jenis Usaha</span>
-              </button>
-              <p class="text-xs text-gray-500 text-center mt-4">Pastikan semua data sudah benar sebelum menyimpan</p>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   </div>
+
+        
 
   <script define:vars={{ baseUrl, slug }}>
     class TambahUsahaManager {
@@ -386,17 +388,17 @@ if (!validModules.includes(slug)) {
               options: null
             },
             {
-              name: 'income_type',
+              name: 'type',
               label: 'Jenis Pemasukan',
               type: 'select',
               placeholder: 'Pilih jenis transaksi',
-              validation_rules: ['required'],
+              validation_rules: ['required, string, in:income,outcome'],
               order: 2,
               options: ['income', 'outcome']
             },
             {
               name: 'amount',
-              label: 'Jumlah Pemasukan',
+              label: 'Total Harga',
               type: 'number',
               placeholder: 'Masukkan nominal dalam rupiah',
               validation_rules: ['required', 'numeric', 'min:0'],
