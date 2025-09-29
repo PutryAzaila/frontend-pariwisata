@@ -321,13 +321,11 @@ async function initializeApp(): Promise<void> {
     // Setup API endpoints
     setupApiEndpoints();
 
-    // Load configuration dari backend dengan error handling yang lebih lenient
+    // STEP 1: Load field and column configurations first
     try {
       await Promise.all([
         loadFieldsConfiguration(),
-        loadColumnsConfiguration(),
-        loadCardsData(),
-        //ini 
+        loadColumnsConfiguration()
       ]);
     } catch (configError) {
       console.warn('Failed to load some configurations, using defaults:', configError);
@@ -340,18 +338,25 @@ async function initializeApp(): Promise<void> {
       }
     }
 
-    // Setup UI
+    // STEP 2: Setup UI (ini akan membuat HTML elements untuk cards)
     setupUI();
     setupEventListeners();
+
+    // STEP 3: Load cards data AFTER UI is setup
+    try {
+      await loadCardsData();
+    } catch (cardsError) {
+      console.warn('Failed to load cards data:', cardsError);
+    }
     
-    // Initialize DataTable (jika gagal, tetap lanjut tanpa error state)
+    // STEP 4: Initialize DataTable
     try {
       await initializeDataTable();
     } catch (tableError) {
       console.warn('DataTable initialization failed, but continuing:', tableError);
     }
 
-    // Langsung show main content
+    // STEP 5: Show main content
     showMainContent();
 
     console.log('App initialized successfully');
@@ -373,6 +378,8 @@ async function initializeApp(): Promise<void> {
     showMainContentWithDefaults();
   }
 }
+
+// Updated showMainContentWithDefaults to also call loadCardsData
 function showMainContentWithDefaults(): void {
   // Set default config jika belum ada
   if (!appConfig) {
@@ -395,6 +402,12 @@ function showMainContentWithDefaults(): void {
 
   setupUI();
   setupEventListeners();
+  
+  // Load cards data after UI is setup
+  loadCardsData().catch(error => {
+    console.warn('Failed to load cards in fallback mode:', error);
+  });
+  
   showMainContent();
 }
 
@@ -507,49 +520,209 @@ async function makeAuthenticatedRequest(url: string, options: RequestInit = {}):
 
   async function loadCardsData(): Promise<void> {
   try {
+    console.log('=== LOADING CARDS DATA ===');
+    console.log('API endpoint:', apiEndpoints.cards);
+    
+    // First, verify that card elements exist
+    const expectedCardIds = ['total-transactions', 'transactions-this-month', 'total-income', 'total-outcome', 'net-balance'];
+    const missingElements = expectedCardIds.filter(id => !document.getElementById(id));
+    
+    if (missingElements.length > 0) {
+      console.error('Missing card elements:', missingElements);
+      console.log('Available elements in stats-cards:', 
+        Array.from(document.querySelectorAll('#stats-cards [id]')).map(el => el.id)
+      );
+      
+      // If elements are missing, it means setupStatsCards wasn't called yet
+      console.error('Cards HTML elements not found. Make sure setupStatsCards() is called before loadCardsData()');
+      return;
+    }
+    
+    console.log('All card elements found, proceeding with API call...');
+    
     const response = await makeAuthenticatedRequest(apiEndpoints.cards);
 
     if (!response.ok) {
-      console.warn(`Failed to load cards: ${response.status} ${response.statusText}`);
+      console.error(`Failed to load cards: ${response.status} ${response.statusText}`);
+      setCardErrorState();
       return;
     }
 
     const result = await response.json();
-    const cardsData = result.data || [];
+    console.log('Cards API response:', result);
     
+    if (!result.success) {
+      console.error('API returned error:', result.message);
+      setCardErrorState();
+      return;
+    }
+
+    const cardsData = result.data;
+    
+    if (!Array.isArray(cardsData)) {
+      console.error('Cards data is not an array:', cardsData);
+      setCardErrorState();
+      return;
+    }
+
+    console.log(`Processing ${cardsData.length} cards...`);
+
     // Update each card with data from API
-    cardsData.forEach((card: any) => {
-      const elementId = card.name;
-      const element = document.getElementById(elementId);
+    cardsData.forEach((card: any, index: number) => {
+      console.log(`Processing card ${index + 1}:`, card);
       
-      if (element) {
-        if (card.name === 'total-transactions') {
-          element.textContent = card.value.toString();
-        } else if (card.name === 'transactions-this-month') {
-          element.textContent = card.value.toString();
-        } else if (card.name === 'total-income') {
-          element.textContent = formatCurrency(card.value);
-        } else if (card.name === 'total-outcome') {
-          element.textContent = formatCurrency(card.value);
-        } else if (card.name === 'net-balance') {
-          element.textContent = formatCurrency(card.value);
-          // Change color based on positive/negative balance
-          if (card.value >= 0) {
-            element.classList.remove('text-red-600');
-            element.classList.add('text-purple-600');
-          } else {
-            element.classList.remove('text-purple-600');
-            element.classList.add('text-red-600');
-          }
-        }
+      const element = document.getElementById(card.name);
+      
+      if (!element) {
+        console.error(`Element not found for card: ${card.name}`);
+        return;
       }
+
+      let formattedValue: string;
+      
+      switch(card.name) {
+        case 'total-transactions':
+        case 'transactions-this-month':
+          formattedValue = (card.value || 0).toLocaleString('id-ID');
+          break;
+          
+        case 'total-income':
+        case 'total-outcome':
+        case 'net-balance':
+          formattedValue = formatCurrency(card.value || 0);
+          
+          // Special color handling for net balance
+          if (card.name === 'net-balance') {
+            element.classList.remove('text-red-600', 'text-purple-600', 'text-green-600');
+            if ((card.value || 0) >= 0) {
+              element.classList.add('text-purple-600');
+              console.log('Set net-balance color to purple (positive)');
+            } else {
+              element.classList.add('text-red-600');
+              console.log('Set net-balance color to red (negative)');
+            }
+          }
+          break;
+          
+        default:
+          formattedValue = String(card.value || 0);
+      }
+      
+      element.textContent = formattedValue;
+      console.log(`✓ Updated card ${card.name}: ${element.textContent}`);
     });
     
-    console.log('Cards data loaded successfully');
+    console.log('=== CARDS LOADED SUCCESSFULLY ===');
+    
   } catch (error) {
-    console.warn('Error loading cards data:', error);
+    console.error('=== ERROR LOADING CARDS ===');
+    console.error('Error details:', error);
+    setCardErrorState();
   }
 }
+
+function debugCardsSetup(): void {
+  console.log('=== CARDS DEBUG INFORMATION ===');
+  
+  console.log('1. App Config:', appConfig);
+  console.log('2. API Endpoints:', apiEndpoints);
+  
+  console.log('3. Stats Cards Container:');
+  const statsContainer = document.getElementById('stats-cards');
+  console.log('  - Container exists:', !!statsContainer);
+  console.log('  - Container HTML:', statsContainer?.innerHTML.substring(0, 200) + '...');
+  
+  console.log('4. Individual Card Elements:');
+  const expectedCards = ['total-transactions', 'transactions-this-month', 'total-income', 'total-outcome', 'net-balance'];
+  expectedCards.forEach(id => {
+    const element = document.getElementById(id);
+    console.log(`  - ${id}:`, {
+      exists: !!element,
+      content: element?.textContent,
+      classes: element?.className
+    });
+  });
+  
+  console.log('5. Manual API Test:');
+  makeAuthenticatedRequest(apiEndpoints.cards)
+    .then(response => {
+      console.log('  - API Response Status:', response.status);
+      return response.json();
+    })
+    .then(data => {
+      console.log('  - API Response Data:', data);
+    })
+    .catch(error => {
+      console.log('  - API Error:', error);
+    });
+}
+
+// Make debug function available globally
+(window as any).debugCardsSetup = debugCardsSetup;
+
+// Helper function to show error state on cards
+function setCardErrorState(): void {
+  const cardIds = ['total-transactions', 'transactions-this-month', 'total-income', 'total-outcome', 'net-balance'];
+  
+  cardIds.forEach(id => {
+    const element = document.getElementById(id);
+    if (element) {
+      if (id.includes('income') || id.includes('outcome') || id.includes('balance')) {
+        element.textContent = 'Rp --';
+      } else {
+        element.textContent = '--';
+      }
+      element.title = 'Gagal memuat data';
+    }
+  });
+}
+
+// Test function to verify card updates work
+function testCardsWithSampleData(): void {
+  const sampleData = [
+    { "name": "total-transactions", "value": 1 },
+    { "name": "transactions-this-month", "value": 1 },
+    { "name": "total-income", "value": 30000 },
+    { "name": "total-outcome", "value": 0 },
+    { "name": "net-balance", "value": 30000 }
+  ];
+
+  sampleData.forEach((card: any) => {
+    const element = document.getElementById(card.name);
+    
+    if (element) {
+      let formattedValue: string;
+      
+      switch(card.name) {
+        case 'total-transactions':
+        case 'transactions-this-month':
+          formattedValue = card.value.toLocaleString('id-ID');
+          break;
+          
+        case 'total-income':
+        case 'total-outcome':
+        case 'net-balance':
+          formattedValue = formatCurrency(card.value);
+          
+          if (card.name === 'net-balance') {
+            element.classList.remove('text-red-600', 'text-purple-600', 'text-green-600');
+            element.classList.add(card.value >= 0 ? 'text-purple-600' : 'text-red-600');
+          }
+          break;
+          
+        default:
+          formattedValue = String(card.value);
+      }
+      
+      element.textContent = formattedValue;
+      console.log(`Test updated: ${card.name} = ${formattedValue}`);
+    }
+  });
+}
+
+// Make test function available globally for debugging
+(window as any).testCardsWithSampleData = testCardsWithSampleData;
+
   async function loadExportLibraries(): Promise<void> {
   return new Promise((resolve, reject) => {
     // Load SheetJS for Excel export
@@ -943,71 +1116,71 @@ function showNotification(message: string, type: 'success' | 'error' = 'success'
   }
 
   function setupStatsCards(): void {
-    const statsContainer = document.getElementById('stats-cards');
-    if (!statsContainer) return;
+  const statsContainer = document.getElementById('stats-cards');
+  if (!statsContainer) return;
 
-    statsContainer.innerHTML = `
-      <div class="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-lg card-hover">
-        <div class="flex items-center justify-between">
-          <div class="flex-1 min-w-0">
-            <p class="text-gray-600 text-xs md:text-sm font-medium mb-1">Total Records</p>
-            <p class="text-xl md:text-3xl font-bold text-${appConfig.color}-600 truncate" id="total-records">0</p>
-          </div>
-          <div class="w-12 h-12 md:w-16 md:h-16 bg-${appConfig.color}-100 rounded-full flex items-center justify-center ml-3 flex-shrink-0">
-            <i class="fas fa-database text-${appConfig.color}-600 text-lg md:text-2xl"></i>
-          </div>
+  statsContainer.innerHTML = `
+    <div class="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-lg card-hover">
+      <div class="flex items-center justify-between">
+        <div class="flex-1 min-w-0">
+          <p class="text-gray-600 text-xs md:text-sm font-medium mb-1">Total Transaksi</p>
+          <p class="text-xl md:text-3xl font-bold text-${appConfig.color}-600 truncate" id="total-transactions">0</p>
+        </div>
+        <div class="w-12 h-12 md:w-16 md:h-16 bg-${appConfig.color}-100 rounded-full flex items-center justify-center ml-3 flex-shrink-0">
+          <i class="fas fa-database text-${appConfig.color}-600 text-lg md:text-2xl"></i>
         </div>
       </div>
-      
-      <div class="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-lg card-hover">
-        <div class="flex items-center justify-between">
-          <div class="flex-1 min-w-0">
-            <p class="text-gray-600 text-xs md:text-sm font-medium mb-1">This Month</p>
-            <p class="text-xl md:text-3xl font-bold text-green-600 truncate" id="month-records">0</p>
-          </div>
-          <div class="w-12 h-12 md:w-16 md:h-16 bg-green-100 rounded-full flex items-center justify-center ml-3 flex-shrink-0">
-            <i class="fas fa-calendar text-green-600 text-lg md:text-2xl"></i>
-          </div>
+    </div>
+    
+    <div class="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-lg card-hover">
+      <div class="flex items-center justify-between">
+        <div class="flex-1 min-w-0">
+          <p class="text-gray-600 text-xs md:text-sm font-medium mb-1">Transaksi Bulan Ini</p>
+          <p class="text-xl md:text-3xl font-bold text-green-600 truncate" id="transactions-this-month">0</p>
+        </div>
+        <div class="w-12 h-12 md:w-16 md:h-16 bg-green-100 rounded-full flex items-center justify-center ml-3 flex-shrink-0">
+          <i class="fas fa-calendar text-green-600 text-lg md:text-2xl"></i>
         </div>
       </div>
-      
-      <div class="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-lg card-hover">
-        <div class="flex items-center justify-between">
-          <div class="flex-1 min-w-0">
-            <p class="text-gray-600 text-xs md:text-sm font-medium mb-1">Total Uang Masuk</p>
-            <p class="text-xl md:text-3xl font-bold text-green-600 truncate" id="total-income">Rp 0</p>
-          </div>
-          <div class="w-12 h-12 md:w-16 md:h-16 bg-green-100 rounded-full flex items-center justify-center ml-3 flex-shrink-0">
-            <i class="fas fa-arrow-up text-green-600 text-lg md:text-2xl"></i>
-          </div>
+    </div>
+    
+    <div class="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-lg card-hover">
+      <div class="flex items-center justify-between">
+        <div class="flex-1 min-w-0">
+          <p class="text-gray-600 text-xs md:text-sm font-medium mb-1">Total Uang Masuk</p>
+          <p class="text-xl md:text-3xl font-bold text-green-600 truncate" id="total-income">Rp 0</p>
+        </div>
+        <div class="w-12 h-12 md:w-16 md:h-16 bg-green-100 rounded-full flex items-center justify-center ml-3 flex-shrink-0">
+          <i class="fas fa-arrow-up text-green-600 text-lg md:text-2xl"></i>
         </div>
       </div>
-      
-      <div class="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-lg card-hover">
-        <div class="flex items-center justify-between">
-          <div class="flex-1 min-w-0">
-            <p class="text-gray-600 text-xs md:text-sm font-medium mb-1">Total Uang Keluar</p>
-            <p class="text-xl md:text-3xl font-bold text-red-600 truncate" id="total-expense">Rp 0</p>
-          </div>
-          <div class="w-12 h-12 md:w-16 md:h-16 bg-red-100 rounded-full flex items-center justify-center ml-3 flex-shrink-0">
-            <i class="fas fa-arrow-down text-red-600 text-lg md:text-2xl"></i>
-          </div>
+    </div>
+    
+    <div class="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-lg card-hover">
+      <div class="flex items-center justify-between">
+        <div class="flex-1 min-w-0">
+          <p class="text-gray-600 text-xs md:text-sm font-medium mb-1">Total Uang Keluar</p>
+          <p class="text-xl md:text-3xl font-bold text-red-600 truncate" id="total-outcome">Rp 0</p>
+        </div>
+        <div class="w-12 h-12 md:w-16 md:h-16 bg-red-100 rounded-full flex items-center justify-center ml-3 flex-shrink-0">
+          <i class="fas fa-arrow-down text-red-600 text-lg md:text-2xl"></i>
         </div>
       </div>
-      
-      <div class="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-lg card-hover">
-        <div class="flex items-center justify-between">
-          <div class="flex-1 min-w-0">
-            <p class="text-gray-600 text-xs md:text-sm font-medium mb-1">Total Keseluruhan</p>
-            <p class="text-xl md:text-3xl font-bold truncate" id="total-balance">Rp 0</p>
-          </div>
-          <div class="w-12 h-12 md:w-16 md:h-16 bg-purple-100 rounded-full flex items-center justify-center ml-3 flex-shrink-0">
-            <i class="fas fa-wallet text-purple-600 text-lg md:text-2xl"></i>
-          </div>
+    </div>
+    
+    <div class="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-lg card-hover">
+      <div class="flex items-center justify-between">
+        <div class="flex-1 min-w-0">
+          <p class="text-gray-600 text-xs md:text-sm font-medium mb-1">Saldo Bersih</p>
+          <p class="text-xl md:text-3xl font-bold truncate" id="net-balance">Rp 0</p>
+        </div>
+        <div class="w-12 h-12 md:w-16 md:h-16 bg-purple-100 rounded-full flex items-center justify-center ml-3 flex-shrink-0">
+          <i class="fas fa-wallet text-purple-600 text-lg md:text-2xl"></i>
         </div>
       </div>
-    `;
-  }
+    </div>
+  `;
+}
   function setupFilters(): void {
     const filterContainer = document.getElementById('filter-container');
     if (!filterContainer || !fieldsConfig.length) return;
@@ -1366,142 +1539,162 @@ function setupEventListeners(): void {
   }
 
   function generateForm(): void {
-    const container = document.getElementById('form-fields');
-    if (!container || !fieldsConfig.length) return;
+  const container = document.getElementById('form-fields');
+  if (!container || !fieldsConfig.length) return;
 
-    let formHTML = '';
+  let formHTML = '';
 
-    fieldsConfig.forEach(field => {
-      const fieldId = `field-${field.name}`;
-      const isRequired = field.required ? 'required' : '';
-      const requiredMark = field.required ? '<span class="text-red-500">*</span>' : '';
+  fieldsConfig.forEach(field => {
+    const fieldId = `field-${field.name}`;
+    const isRequired = field.required ? 'required' : '';
+    const requiredMark = field.required ? '<span class="text-red-500">*</span>' : '';
 
-      formHTML += `<div class="form-group">`;
-      formHTML += `<label class="block text-gray-700 text-sm font-medium mb-2" for="${fieldId}">
-                     ${field.label} ${requiredMark}
-                   </label>`;
+    formHTML += `<div class="form-group">`;
+    formHTML += `<label class="block text-gray-700 text-sm font-medium mb-2" for="${fieldId}">
+                   ${field.label} ${requiredMark}
+                 </label>`;
 
-      switch (field.type) {
-        case 'text':
-        case 'email':
-        case 'url':
-          formHTML += `<input type="${field.type}" id="${fieldId}" name="${field.name}" ${isRequired}
-                              class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${appConfig.color}-500 focus:border-transparent transition-all duration-200"
-                              placeholder="Masukkan ${field.label.toLowerCase()}" />`;
-          break;
+    switch (field.type) {
+      case 'text':
+      case 'email':
+      case 'url':
+        formHTML += `<input type="${field.type}" id="${fieldId}" name="${field.name}" ${isRequired}
+                            class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${appConfig.color}-500 focus:border-transparent transition-all duration-200"
+                            placeholder="Masukkan ${field.label.toLowerCase()}" />`;
+        break;
 
-        case 'number':
-        case 'currency':
-          const step = field.type === 'currency' ? '1000' : '1';
-          const min = field.validation?.min || '0';
-          formHTML += `<input type="number" id="${fieldId}" name="${field.name}" ${isRequired}
-                              class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${appConfig.color}-500 focus:border-transparent transition-all duration-200"
-                              placeholder="0" step="${step}" min="${min}" />`;
-          break;
+      case 'number':
+        const step = '1';
+        const min = field.validation?.min || '0';
+        formHTML += `<input type="number" id="${fieldId}" name="${field.name}" ${isRequired}
+                            class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${appConfig.color}-500 focus:border-transparent transition-all duration-200"
+                            placeholder="0" step="${step}" min="${min}" />`;
+        break;
 
-        case 'date':
-          formHTML += `<input type="date" id="${fieldId}" name="${field.name}" ${isRequired}
-                              class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${appConfig.color}-500 focus:border-transparent transition-all duration-200" />`;
-          break;
+      case 'currency':
+        formHTML += `<div class="relative">
+                      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">Rp</span>
+                      <input type="text" id="${fieldId}" name="${field.name}" ${isRequired}
+                            class="w-full pl-12 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${appConfig.color}-500 focus:border-transparent transition-all duration-200"
+                            placeholder="0" 
+                            oninput="formatCurrencyInput(this)" 
+                            onblur="validateCurrencyInput(this)" />
+                    </div>`;
+        break;
 
-        case 'datetime':
-          formHTML += `<input type="datetime-local" id="${fieldId}" name="${field.name}" ${isRequired}
-                              class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${appConfig.color}-500 focus:border-transparent transition-all duration-200" />`;
-          break;
+      case 'date':
+        formHTML += `<input type="date" id="${fieldId}" name="${field.name}" ${isRequired}
+                            class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${appConfig.color}-500 focus:border-transparent transition-all duration-200" />`;
+        break;
 
-        case 'select':
-          formHTML += `<select id="${fieldId}" name="${field.name}" ${isRequired}
-                              class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${appConfig.color}-500 focus:border-transparent transition-all duration-200">
-                         <option value="">Pilih ${field.label}</option>`;
-          if (field.options) {
-            field.options.forEach(option => {
-              formHTML += `<option value="${option}">${option.charAt(0).toUpperCase() + option.slice(1)}</option>`;
-            });
-          }
-          formHTML += `</select>`;
-          break;
+      case 'datetime':
+        formHTML += `<input type="datetime-local" id="${fieldId}" name="${field.name}" ${isRequired}
+                            class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${appConfig.color}-500 focus:border-transparent transition-all duration-200" />`;
+        break;
 
-        case 'textarea':
-          formHTML += `<textarea id="${fieldId}" name="${field.name}" ${isRequired}
-                                class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${appConfig.color}-500 focus:border-transparent transition-all duration-200 resize-none"
-                                rows="3" placeholder="Masukkan ${field.label.toLowerCase()}"></textarea>`;
-          break;
+      case 'select':
+        formHTML += `<select id="${fieldId}" name="${field.name}" ${isRequired}
+                            class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${appConfig.color}-500 focus:border-transparent transition-all duration-200">
+                       <option value="">Pilih ${field.label}</option>`;
+        if (field.options) {
+          field.options.forEach(option => {
+            // Capitalize first letter of each word
+            const displayText = option
+              .split(' ')
+              .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+              .join(' ');
+            formHTML += `<option value="${option}">${displayText}</option>`;
+          });
+        }
+        formHTML += `</select>`;
+        break;
 
-        case 'boolean':
-          formHTML += `<div class="flex items-center space-x-3">
-                         <input type="checkbox" id="${fieldId}" name="${field.name}" 
-                                class="w-4 h-4 text-${appConfig.color}-600 bg-gray-100 border-gray-300 rounded focus:ring-${appConfig.color}-500 focus:ring-2" />
-                         <label for="${fieldId}" class="text-sm font-medium text-gray-700">${field.label}</label>
-                       </div>`;
-          break;
+      case 'textarea':
+        formHTML += `<textarea id="${fieldId}" name="${field.name}" ${isRequired}
+                              class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${appConfig.color}-500 focus:border-transparent transition-all duration-200 resize-none"
+                              rows="3" placeholder="Masukkan ${field.label.toLowerCase()}"></textarea>`;
+        break;
 
-        default:
-          formHTML += `<input type="text" id="${fieldId}" name="${field.name}" ${isRequired}
-                              class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${appConfig.color}-500 focus:border-transparent transition-all duration-200"
-                              placeholder="Masukkan ${field.label.toLowerCase()}" />`;
-      }
+      case 'boolean':
+        formHTML += `<div class="flex items-center space-x-3">
+                       <input type="checkbox" id="${fieldId}" name="${field.name}" 
+                              class="w-4 h-4 text-${appConfig.color}-600 bg-gray-100 border-gray-300 rounded focus:ring-${appConfig.color}-500 focus:ring-2" />
+                       <label for="${fieldId}" class="text-sm font-medium text-gray-700">${field.label}</label>
+                     </div>`;
+        break;
 
-      formHTML += `</div>`;
-    });
+      default:
+        formHTML += `<input type="text" id="${fieldId}" name="${field.name}" ${isRequired}
+                            class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${appConfig.color}-500 focus:border-transparent transition-all duration-200"
+                            placeholder="Masukkan ${field.label.toLowerCase()}" />`;
+    }
 
-    container.innerHTML = formHTML;
-  }
+    formHTML += `</div>`;
+  });
+
+  container.innerHTML = formHTML;
+}
 
   async function loadRecordData(id: string): Promise<void> {
-    try {
-      const response = await fetch(apiEndpoints.show.replace('{id}', id), {
-        headers: getAuthHeaders()
-      });
+  try {
+    const response = await makeAuthenticatedRequest(apiEndpoints.show.replace('{id}', id));
 
-      if (!response.ok) {
-        throw new Error(`Failed to load record: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const recordData = data.data || data;
-
-      // Populate form fields
-      fieldsConfig.forEach(field => {
-        const fieldElement = document.getElementById(`field-${field.name}`) as HTMLInputElement;
-        if (fieldElement && recordData[field.name] !== undefined) {
-          if (field.type === 'boolean') {
-            (fieldElement as HTMLInputElement).checked = !!recordData[field.name];
-          } else {
-            fieldElement.value = recordData[field.name];
-          }
-        }
-      });
-
-    } catch (error) {
-      console.error('Error loading record data:', error);
-      alert('Gagal memuat data record');
+    if (!response.ok) {
+      throw new Error(`Failed to load record: ${response.status}`);
     }
+
+    const data = await response.json();
+    const recordData = data.data || data;
+
+    fieldsConfig.forEach(field => {
+      const fieldElement = document.getElementById(`field-${field.name}`) as HTMLInputElement;
+      if (fieldElement && recordData[field.name] !== undefined) {
+        if (field.type === 'boolean') {
+          fieldElement.checked = !!recordData[field.name];
+        } else if (field.type === 'currency') {
+          // Format currency untuk display
+          const value = recordData[field.name];
+          if (value) {
+            fieldElement.value = parseInt(value).toLocaleString('id-ID');
+            fieldElement.dataset.rawValue = String(value);
+          }
+        } else {
+          fieldElement.value = recordData[field.name];
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Error loading record data:', error);
+    alert('Gagal memuat data record');
   }
+}
 
   async function handleFormSubmit(event: Event): Promise<void> {
-    event.preventDefault();
-    
-    const form = event.target as HTMLFormElement;
-    const formData = new FormData(form);
-    const submitButton = document.getElementById('btn-submit') as HTMLButtonElement;
-    
-    try {
-      // Show loading state
-      submitButton.disabled = true;
-      submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Menyimpan...';
+  event.preventDefault();
+  
+  const form = event.target as HTMLFormElement;
+  const submitButton = document.getElementById('btn-submit') as HTMLButtonElement;
+  
+  try {
+    submitButton.disabled = true;
+    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Menyimpan...';
 
-      // Prepare data
-      const data: any = {};
-      fieldsConfig.forEach(field => {
-        const value = formData.get(field.name);
-        if (field.type === 'boolean') {
-          data[field.name] = !!value;
-        } else if (field.type === 'number' || field.type === 'currency') {
-          data[field.name] = value ? parseFloat(value as string) : null;
-        } else {
-          data[field.name] = value || null;
-        }
-      });
+    const data: any = {};
+    fieldsConfig.forEach(field => {
+      const fieldElement = document.getElementById(`field-${field.name}`) as HTMLInputElement;
+      
+      if (field.type === 'boolean') {
+        data[field.name] = fieldElement?.checked || false;
+      } else if (field.type === 'currency') {
+        // Ambil raw value untuk currency
+        data[field.name] = fieldElement ? getRawCurrencyValue(fieldElement) : null;
+      } else if (field.type === 'number') {
+        data[field.name] = fieldElement?.value ? parseFloat(fieldElement.value) : null;
+      } else {
+        data[field.name] = fieldElement?.value || null;
+      }
+    });
 
       // Determine method and endpoint
       const isEdit = !!editingId;
@@ -1595,6 +1788,38 @@ function setupEventListeners(): void {
       maximumFractionDigits: 0
     }).format(amount || 0);
   }
+  function formatCurrencyInput(input: HTMLInputElement): void {
+  // Hapus semua karakter non-digit
+  let value = input.value.replace(/\D/g, '');
+  
+  // Jangan format jika kosong
+  if (!value) {
+    input.value = '';
+    return;
+  }
+  
+  // Convert ke number dan format dengan titik ribuan
+  const numberValue = parseInt(value, 10);
+  input.value = numberValue.toLocaleString('id-ID');
+  
+  // Store raw value in data attribute untuk submit
+  input.dataset.rawValue = value;
+}
+
+// Validate dan clean currency input sebelum submit
+function validateCurrencyInput(input: HTMLInputElement): void {
+  const rawValue = input.value.replace(/\D/g, '');
+  if (rawValue) {
+    input.dataset.rawValue = rawValue;
+    formatCurrencyInput(input);
+  }
+}
+
+// Get raw currency value untuk submit
+function getRawCurrencyValue(input: HTMLInputElement): number {
+  const rawValue = input.dataset.rawValue || input.value.replace(/\D/g, '');
+  return parseInt(rawValue, 10) || 0;
+}
 
   function formatDate(dateString: string): string {
     if (!dateString) return '-';
@@ -1797,6 +2022,10 @@ async function printData(): Promise<void> {
   (window as any).closeModal = closeModal;
   (window as any).resetFilters = resetFilters;
   (window as any).initializeApp = initializeApp;
+  // Di bagian bawah sebelum DOMContentLoaded
+  (window as any).formatCurrencyInput = formatCurrencyInput;
+  (window as any).validateCurrencyInput = validateCurrencyInput;
+  (window as any).getRawCurrencyValue = getRawCurrencyValue;
 
   // Initialize when DOM is ready
   document.addEventListener('DOMContentLoaded', initializeApp);
