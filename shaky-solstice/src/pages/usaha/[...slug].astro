@@ -1,17 +1,13 @@
 ---
-// src/pages/[...slug].astro
 import AdminLayout from "../../layouts/AdminLayout.astro";
+import NotificationModal from "../../components/NotificationModal.astro";
 
-
-// Extract slug information
 const { slug } = Astro.params;
 const slugParts = (slug as string)?.split('/') || [];
 
-// Determine module and submodule from URL
-const module = slugParts[0]; // 'pokdarwis' or 'bumdes'  
-const submodule = slugParts[1]; // 'sewa-umkm', 'tiket-wisata', etc.
+const module = slugParts[0]; 
+const submodule = slugParts[1]; 
 
-// Validate required parts
 if (!module || !submodule) {
   return Astro.redirect('/404');
 }
@@ -59,11 +55,9 @@ const pageTitle = `${config.title} - ${submoduleName}`;
     <!-- Main Content -->
     <div id="main-content" class="hidden">
       <!-- Stats Cards -->
-    <div id="stats-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6 mb-6 md:mb-8">
+      <div id="stats-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6 mb-6 md:mb-8">
         <!-- Cards will be populated dynamically -->
       </div>
-
-      <!-- Replace the Control Panel section in your original file with this updated version -->
 
       <!-- Control Panel -->
       <div class="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-lg mb-6 md:mb-8">
@@ -156,6 +150,7 @@ const pageTitle = `${config.title} - ${submoduleName}`;
       </form>
     </div>
   </div>
+  <NotificationModal />
 </AdminLayout>
 
 <script>
@@ -202,14 +197,15 @@ const pageTitle = `${config.title} - ${submoduleName}`;
     update: string;
     delete: string;
   }
+
   interface DataTableColumn {
-  data: string | null;
-  title: string;
-  orderable?: boolean;
-  searchable?: boolean;
-  className?: string;
-  render?: Function;
-}
+    data: string | null;
+    title: string;
+    orderable?: boolean;
+    searchable?: boolean;
+    className?: string;
+    render?: Function;
+  }
 
   interface DataTableInstance {
     destroy(): void;
@@ -232,256 +228,175 @@ const pageTitle = `${config.title} - ${submoduleName}`;
   let dataTable: DataTableInstance | null = null;
   let editingId: string | null = null;
 
-function getAuthHeaders(): HeadersInit {
-  const token = localStorage.getItem('access_token');
-  const tokenType = (localStorage.getItem('token_type') || 'Bearer').trim();
-  
-  console.log('Auth Debug:', {
-    hasToken: !!token,
-    tokenType: tokenType,
-    tokenLength: token?.length || 0,
-    tokenPreview: token ? `${token.substring(0, 10)}...${token.substring(token.length - 5)}` : 'none'
-  });
-  
-  if (!token) {
-    console.warn('No access token found in localStorage');
-    throw new Error('NO_TOKEN'); 
-  }
-  
-  return {
-    'Authorization': `${tokenType} ${token}`,
-    'Accept': 'application/json',
-    'Content-Type': 'application/json'
-  };
-}
-
-function redirectToLogin(): void {
-  console.log('Redirecting to login...');
-  // Show user-friendly message before redirect
-  showErrorState('Sesi login Anda telah berakhir. Mengalihkan ke halaman login...');
-  
-  // Clear any existing data
-  clearAuthData();
-  
-  // Redirect after short delay to let user read the message
-  setTimeout(() => {
-    window.location.href = '/login';
-  }, 2000);
-}
-
-function clearAuthData(): void {
-  const keysToRemove = [
-    'access_token', 
-    'token_type', 
-    'user_data', 
-    'login_time', 
-    'user_role', 
-    'user_permissions',
-    'refresh_token'
-  ];
-  
-  keysToRemove.forEach(key => {
-    localStorage.removeItem(key);
-    console.log(`Cleared: ${key}`);
-  });
-}
-
-function debugAuthState(): void {
-  console.log('Current Auth State:');
-  console.log('access_token:', localStorage.getItem('access_token') ? 'EXISTS' : 'MISSING');
-  console.log('token_type:', localStorage.getItem('token_type') || 'MISSING');
-  console.log('user_data:', localStorage.getItem('user_data') ? 'EXISTS' : 'MISSING');
-  console.log('user_permissions:', localStorage.getItem('user_permissions') ? 'EXISTS' : 'MISSING');
-  console.log('login_time:', localStorage.getItem('login_time') || 'MISSING');
-  
-  const token = localStorage.getItem('access_token');
-  if (token && token.length > 15) {
-    console.log('Token preview:', `${token.substring(0, 10)}...${token.substring(token.length - 5)}`);
-  }
-}
-(window as any).debugAuthState = debugAuthState;
-(window as any).clearAuthData = clearAuthData;
-(window as any).redirectToLogin = redirectToLogin;
-
-
-async function initializeApp(): Promise<void> {
-  try {
-    // Extract configuration from DOM (tanpa loading state)
-    const container = document.getElementById('app-container');
-    if (!container) throw new Error('App container not found');
-
-    appConfig = {
-      module: container.dataset.module!,
-      submodule: container.dataset.submodule!,
-      title: container.dataset.title!,
-      color: container.dataset.color!,
-      icon: container.dataset.icon!
+  function getAuthHeaders(): HeadersInit {
+    const token = localStorage.getItem('access_token');
+    const tokenType = (localStorage.getItem('token_type') || 'Bearer').trim();
+    
+    if (!token) {
+      console.warn('No access token found in localStorage');
+      throw new Error('NO_TOKEN'); 
+    }
+    
+    return {
+      'Authorization': `${tokenType} ${token}`,
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
     };
+  }
 
-    // Setup API endpoints
-    setupApiEndpoints();
+  function redirectToLogin(): void {
+    showErrorState('Sesi login Anda telah berakhir. Mengalihkan ke halaman login...');
+    clearAuthData();
+    setTimeout(() => {
+      window.location.href = '/login';
+    }, 2000);
+  }
 
-    // STEP 1: Load field and column configurations first
+  function clearAuthData(): void {
+    const keysToRemove = ['access_token', 'token_type', 'user_data', 'login_time', 'user_role', 'user_permissions', 'refresh_token'];
+    keysToRemove.forEach(key => localStorage.removeItem(key));
+  }
+
+  async function makeAuthenticatedRequest(url: string, options: RequestInit = {}): Promise<Response> {
     try {
-      await Promise.all([
-        loadFieldsConfiguration(),
-        loadColumnsConfiguration()
-      ]);
-    } catch (configError) {
-      console.warn('Failed to load some configurations, using defaults:', configError);
-      // Set default configurations jika gagal load
-      if (!fieldsConfig.length) {
-        fieldsConfig = getDefaultFields();
+      const headers = {
+        ...getAuthHeaders(),
+        ...options.headers
+      };
+
+      const response = await fetch(url, {
+        ...options,
+        headers
+      });
+
+      if (response.status === 401 || response.status === 403) {
+        clearAuthData();
+        redirectToLogin();
+        throw new Error('UNAUTHORIZED');
       }
-      if (!columnsConfig.length) {
-        columnsConfig = getDefaultColumns();
+
+      return response;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage === 'NO_TOKEN') {
+        redirectToLogin();
       }
-    }
-
-    // STEP 2: Setup UI (ini akan membuat HTML elements untuk cards)
-    setupUI();
-    setupEventListeners();
-
-    // STEP 3: Load cards data AFTER UI is setup
-    try {
-      await loadCardsData();
-    } catch (cardsError) {
-      console.warn('Failed to load cards data:', cardsError);
-    }
-    
-    // STEP 4: Initialize DataTable
-    try {
-      await initializeDataTable();
-    } catch (tableError) {
-      console.warn('DataTable initialization failed, but continuing:', tableError);
-    }
-
-    // STEP 5: Show main content
-    showMainContent();
-
-    console.log('App initialized successfully');
-
-  } catch (error) {
-    console.error('Failed to initialize app:', error);
-    
-    // Langsung redirect ke login jika auth error, tanpa show error state
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    if (errorMessage === 'NO_TOKEN' || 
-        errorMessage === 'UNAUTHORIZED' || 
-        errorMessage.includes('401')) {
-      redirectToLogin();
-      return;
-    }
-    
-    // Untuk error lain, tetap show main content dengan default config
-    console.warn('Using fallback initialization');
-    showMainContentWithDefaults();
-  }
-}
-
-// Updated showMainContentWithDefaults to also call loadCardsData
-function showMainContentWithDefaults(): void {
-  // Set default config jika belum ada
-  if (!appConfig) {
-    const container = document.getElementById('app-container');
-    appConfig = {
-      module: container?.dataset.module || 'default',
-      submodule: container?.dataset.submodule || 'default',
-      title: container?.dataset.title || 'Data',
-      color: container?.dataset.color || 'blue',
-      icon: container?.dataset.icon || 'fas fa-table'
-    };
-  }
-
-  if (!fieldsConfig.length) {
-    fieldsConfig = getDefaultFields();
-  }
-  if (!columnsConfig.length) {
-    columnsConfig = getDefaultColumns();
-  }
-
-  setupUI();
-  setupEventListeners();
-  
-  // Load cards data after UI is setup
-  loadCardsData().catch(error => {
-    console.warn('Failed to load cards in fallback mode:', error);
-  });
-  
-  showMainContent();
-}
-
-// Default configurations untuk fallback
-function getDefaultFields(): FieldDefinition[] {
-  return [
-    { name: 'name', type: 'text', label: 'Nama', required: true },
-    { name: 'description', type: 'textarea', label: 'Deskripsi' },
-    { name: 'created_at', type: 'date', label: 'Tanggal Dibuat' }
-  ];
-}
-
-function getDefaultColumns(): ColumnDefinition[] {
-  return [
-    { name: 'id', data: 'id', title: 'ID', type: 'number', sortable: true },
-    { name: 'name', data: 'name', title: 'Nama', type: 'text', sortable: true },
-    { name: 'description', data: 'description', title: 'Deskripsi', type: 'text' },
-    { name: 'created_at', data: 'created_at', title: 'Dibuat', type: 'date', sortable: true }
-  ];
-}
-
-// Modifikasi fungsi loadFieldsConfiguration untuk tidak throw error
-async function loadFieldsConfiguration(): Promise<void> {
-  try {
-    const response = await makeAuthenticatedRequest(apiEndpoints.fields);
-
-    if (!response.ok) {
-      console.warn(`Failed to load fields: ${response.status} ${response.statusText}`);
-      return; // Return tanpa throw error
-    }
-
-    const data = await response.json();
-    fieldsConfig = data.data || data;
-    
-    console.log('Fields configuration loaded:', fieldsConfig);
-  } catch (error) {
-    console.warn('Error loading fields, will use defaults:', error);
-    // Tidak throw error, biarkan app tetap jalan
-  }
-}
-
-// Enhanced API call wrapper with better error handling
-async function makeAuthenticatedRequest(url: string, options: RequestInit = {}): Promise<Response> {
-  try {
-    const headers = {
-      ...getAuthHeaders(),
-      ...options.headers
-    };
-
-    const response = await fetch(url, {
-      ...options,
-      headers
-    });
-
-    // Handle authentication errors immediately
-    if (response.status === 401 || response.status === 403) {
-      console.warn('Authentication failed in API request');
-      clearAuthData();
-      redirectToLogin();
-      throw new Error('UNAUTHORIZED');
-    }
-
-    return response;
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    
-    if (errorMessage === 'NO_TOKEN') {
-      redirectToLogin();
       throw error;
     }
-    
-    throw error;
   }
-}
+
+  async function initializeApp(): Promise<void> {
+    try {
+      const container = document.getElementById('app-container');
+      if (!container) throw new Error('App container not found');
+
+      appConfig = {
+        module: container.dataset.module!,
+        submodule: container.dataset.submodule!,
+        title: container.dataset.title!,
+        color: container.dataset.color!,
+        icon: container.dataset.icon!
+      };
+
+      setupApiEndpoints();
+
+      try {
+        await Promise.all([
+          loadFieldsConfiguration(),
+          loadColumnsConfiguration()
+        ]);
+      } catch (configError) {
+        console.warn('Failed to load configurations:', configError);
+        if (!fieldsConfig.length) fieldsConfig = getDefaultFields();
+        if (!columnsConfig.length) columnsConfig = getDefaultColumns();
+      }
+
+      setupUI();
+      setupEventListeners();
+
+      try {
+        await loadCardsData();
+      } catch (cardsError) {
+        console.warn('Failed to load cards:', cardsError);
+      }
+      
+      try {
+        await initializeDataTable();
+      } catch (tableError) {
+        console.warn('DataTable initialization failed:', tableError);
+      }
+
+      showMainContent();
+
+    } catch (error) {
+      console.error('Failed to initialize app:', error);
+      
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage === 'NO_TOKEN' || errorMessage === 'UNAUTHORIZED' || errorMessage.includes('401')) {
+        redirectToLogin();
+        return;
+      }
+      
+      showMainContentWithDefaults();
+    }
+  }
+
+  function showMainContentWithDefaults(): void {
+    if (!appConfig) {
+      const container = document.getElementById('app-container');
+      appConfig = {
+        module: container?.dataset.module || 'default',
+        submodule: container?.dataset.submodule || 'default',
+        title: container?.dataset.title || 'Data',
+        color: container?.dataset.color || 'blue',
+        icon: container?.dataset.icon || 'fas fa-table'
+      };
+    }
+
+    if (!fieldsConfig.length) fieldsConfig = getDefaultFields();
+    if (!columnsConfig.length) columnsConfig = getDefaultColumns();
+
+    setupUI();
+    setupEventListeners();
+    
+    loadCardsData().catch(error => {
+      console.warn('Failed to load cards in fallback:', error);
+    });
+    
+    showMainContent();
+  }
+
+  function getDefaultFields(): FieldDefinition[] {
+    return [
+      { name: 'name', type: 'text', label: 'Nama', required: true },
+      { name: 'description', type: 'textarea', label: 'Deskripsi' },
+      { name: 'created_at', type: 'date', label: 'Tanggal Dibuat' }
+    ];
+  }
+
+  function getDefaultColumns(): ColumnDefinition[] {
+    return [
+      { name: 'id', data: 'id', title: 'ID', type: 'number', sortable: true },
+      { name: 'name', data: 'name', title: 'Nama', type: 'text', sortable: true },
+      { name: 'description', data: 'description', title: 'Deskripsi', type: 'text' },
+      { name: 'created_at', data: 'created_at', title: 'Dibuat', type: 'date', sortable: true }
+    ];
+  }
+
+  async function loadFieldsConfiguration(): Promise<void> {
+    try {
+      const response = await makeAuthenticatedRequest(apiEndpoints.fields);
+      if (!response.ok) {
+        console.warn(`Failed to load fields: ${response.status}`);
+        return;
+      }
+      const data = await response.json();
+      fieldsConfig = data.data || data;
+    } catch (error) {
+      console.warn('Error loading fields:', error);
+    }
+  }
+
   function setupApiEndpoints(): void {
     const base = `https://pengmas.hipmi-tup.com/dashboard/${appConfig.module}/${appConfig.submodule}`;
     
@@ -495,611 +410,345 @@ async function makeAuthenticatedRequest(url: string, options: RequestInit = {}):
       show: `${base}/{id}`,
       update: `${base}/{id}`,
       delete: `${base}/{id}`
-      //ii
     };
   }
 
   async function loadColumnsConfiguration(): Promise<void> {
-  try {
-    const response = await makeAuthenticatedRequest(apiEndpoints.columns);
-
-    if (!response.ok) {
-      console.warn(`Failed to load columns: ${response.status} ${response.statusText}`);
-      return; // Return tanpa throw error
+    try {
+      const response = await makeAuthenticatedRequest(apiEndpoints.columns);
+      if (!response.ok) {
+        console.warn(`Failed to load columns: ${response.status}`);
+        return;
+      }
+      const data = await response.json();
+      columnsConfig = data.data || data;
+    } catch (error) {
+      console.warn('Error loading columns:', error);
     }
-
-    const data = await response.json();
-    columnsConfig = data.data || data;
-    
-    console.log('Columns configuration loaded:', columnsConfig);
-  } catch (error) {
-    console.warn('Error loading columns, will use defaults:', error);
-    // Tidak throw error, biarkan app tetap jalan
   }
-}
 
   async function loadCardsData(): Promise<void> {
-  try {
-    console.log('=== LOADING CARDS DATA ===');
-    console.log('API endpoint:', apiEndpoints.cards);
-    
-    // First, verify that card elements exist
-    const expectedCardIds = ['total-transactions', 'transactions-this-month', 'total-income', 'total-outcome', 'net-balance'];
-    const missingElements = expectedCardIds.filter(id => !document.getElementById(id));
-    
-    if (missingElements.length > 0) {
-      console.error('Missing card elements:', missingElements);
-      console.log('Available elements in stats-cards:', 
-        Array.from(document.querySelectorAll('#stats-cards [id]')).map(el => el.id)
-      );
-      
-      // If elements are missing, it means setupStatsCards wasn't called yet
-      console.error('Cards HTML elements not found. Make sure setupStatsCards() is called before loadCardsData()');
-      return;
-    }
-    
-    console.log('All card elements found, proceeding with API call...');
-    
-    const response = await makeAuthenticatedRequest(apiEndpoints.cards);
-
-    if (!response.ok) {
-      console.error(`Failed to load cards: ${response.status} ${response.statusText}`);
-      setCardErrorState();
-      return;
-    }
-
-    const result = await response.json();
-    console.log('Cards API response:', result);
-    
-    if (!result.success) {
-      console.error('API returned error:', result.message);
-      setCardErrorState();
-      return;
-    }
-
-    const cardsData = result.data;
-    
-    if (!Array.isArray(cardsData)) {
-      console.error('Cards data is not an array:', cardsData);
-      setCardErrorState();
-      return;
-    }
-
-    console.log(`Processing ${cardsData.length} cards...`);
-
-    // Update each card with data from API
-    cardsData.forEach((card: any, index: number) => {
-      console.log(`Processing card ${index + 1}:`, card);
-      
-      const element = document.getElementById(card.name);
-      
-      if (!element) {
-        console.error(`Element not found for card: ${card.name}`);
+    try {
+      const response = await makeAuthenticatedRequest(apiEndpoints.cards);
+      if (!response.ok) {
+        setCardErrorState();
         return;
       }
 
-      let formattedValue: string;
-      
-      switch(card.name) {
-        case 'total-transactions':
-        case 'transactions-this-month':
-          formattedValue = (card.value || 0).toLocaleString('id-ID');
-          break;
-          
-        case 'total-income':
-        case 'total-outcome':
-        case 'net-balance':
-          formattedValue = formatCurrency(card.value || 0);
-          
-          // Special color handling for net balance
-          if (card.name === 'net-balance') {
-            element.classList.remove('text-red-600', 'text-purple-600', 'text-green-600');
-            if ((card.value || 0) >= 0) {
-              element.classList.add('text-purple-600');
-              console.log('Set net-balance color to purple (positive)');
-            } else {
-              element.classList.add('text-red-600');
-              console.log('Set net-balance color to red (negative)');
+      const result = await response.json();
+      if (!result.success || !Array.isArray(result.data)) {
+        setCardErrorState();
+        return;
+      }
+
+      const cardsData = result.data;
+      cardsData.forEach((card: any) => {
+        const element = document.getElementById(card.name);
+        if (!element) return;
+
+        let formattedValue: string;
+        
+        switch(card.name) {
+          case 'total-transactions':
+          case 'transactions-this-month':
+            formattedValue = (card.value || 0).toLocaleString('id-ID');
+            break;
+            
+          case 'total-income':
+          case 'total-outcome':
+          case 'net-balance':
+            formattedValue = formatCurrency(card.value || 0);
+            
+            if (card.name === 'net-balance') {
+              element.classList.remove('text-red-600', 'text-purple-600', 'text-green-600');
+              if ((card.value || 0) >= 0) {
+                element.classList.add('text-purple-600');
+              } else {
+                element.classList.add('text-red-600');
+              }
             }
-          }
-          break;
-          
-        default:
-          formattedValue = String(card.value || 0);
-      }
+            break;
+            
+          default:
+            formattedValue = String(card.value || 0);
+        }
+        
+        element.textContent = formattedValue;
+      });
       
-      element.textContent = formattedValue;
-      console.log(`✓ Updated card ${card.name}: ${element.textContent}`);
-    });
-    
-    console.log('=== CARDS LOADED SUCCESSFULLY ===');
-    
-  } catch (error) {
-    console.error('=== ERROR LOADING CARDS ===');
-    console.error('Error details:', error);
-    setCardErrorState();
+    } catch (error) {
+      console.error('Error loading cards:', error);
+      setCardErrorState();
+    }
   }
-}
 
-function debugCardsSetup(): void {
-  console.log('=== CARDS DEBUG INFORMATION ===');
-  
-  console.log('1. App Config:', appConfig);
-  console.log('2. API Endpoints:', apiEndpoints);
-  
-  console.log('3. Stats Cards Container:');
-  const statsContainer = document.getElementById('stats-cards');
-  console.log('  - Container exists:', !!statsContainer);
-  console.log('  - Container HTML:', statsContainer?.innerHTML.substring(0, 200) + '...');
-  
-  console.log('4. Individual Card Elements:');
-  const expectedCards = ['total-transactions', 'transactions-this-month', 'total-income', 'total-outcome', 'net-balance'];
-  expectedCards.forEach(id => {
-    const element = document.getElementById(id);
-    console.log(`  - ${id}:`, {
-      exists: !!element,
-      content: element?.textContent,
-      classes: element?.className
-    });
-  });
-  
-  console.log('5. Manual API Test:');
-  makeAuthenticatedRequest(apiEndpoints.cards)
-    .then(response => {
-      console.log('  - API Response Status:', response.status);
-      return response.json();
-    })
-    .then(data => {
-      console.log('  - API Response Data:', data);
-    })
-    .catch(error => {
-      console.log('  - API Error:', error);
-    });
-}
-
-// Make debug function available globally
-(window as any).debugCardsSetup = debugCardsSetup;
-
-// Helper function to show error state on cards
-function setCardErrorState(): void {
-  const cardIds = ['total-transactions', 'transactions-this-month', 'total-income', 'total-outcome', 'net-balance'];
-  
-  cardIds.forEach(id => {
-    const element = document.getElementById(id);
-    if (element) {
-      if (id.includes('income') || id.includes('outcome') || id.includes('balance')) {
-        element.textContent = 'Rp --';
-      } else {
-        element.textContent = '--';
-      }
-      element.title = 'Gagal memuat data';
-    }
-  });
-}
-
-// Test function to verify card updates work
-function testCardsWithSampleData(): void {
-  const sampleData = [
-    { "name": "total-transactions", "value": 1 },
-    { "name": "transactions-this-month", "value": 1 },
-    { "name": "total-income", "value": 30000 },
-    { "name": "total-outcome", "value": 0 },
-    { "name": "net-balance", "value": 30000 }
-  ];
-
-  sampleData.forEach((card: any) => {
-    const element = document.getElementById(card.name);
+  function setCardErrorState(): void {
+    const cardIds = ['total-transactions', 'transactions-this-month', 'total-income', 'total-outcome', 'net-balance'];
     
-    if (element) {
-      let formattedValue: string;
-      
-      switch(card.name) {
-        case 'total-transactions':
-        case 'transactions-this-month':
-          formattedValue = card.value.toLocaleString('id-ID');
-          break;
-          
-        case 'total-income':
-        case 'total-outcome':
-        case 'net-balance':
-          formattedValue = formatCurrency(card.value);
-          
-          if (card.name === 'net-balance') {
-            element.classList.remove('text-red-600', 'text-purple-600', 'text-green-600');
-            element.classList.add(card.value >= 0 ? 'text-purple-600' : 'text-red-600');
-          }
-          break;
-          
-        default:
-          formattedValue = String(card.value);
+    cardIds.forEach(id => {
+      const element = document.getElementById(id);
+      if (element) {
+        if (id.includes('income') || id.includes('outcome') || id.includes('balance')) {
+          element.textContent = 'Rp --';
+        } else {
+          element.textContent = '--';
+        }
       }
-      
-      element.textContent = formattedValue;
-      console.log(`Test updated: ${card.name} = ${formattedValue}`);
-    }
-  });
-}
-
-// Make test function available globally for debugging
-(window as any).testCardsWithSampleData = testCardsWithSampleData;
+    });
+  }
 
   async function loadExportLibraries(): Promise<void> {
-  return new Promise((resolve, reject) => {
-    // Load SheetJS for Excel export
-    if (typeof (window as any).XLSX === 'undefined') {
-      const script = document.createElement('script');
-      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
-      script.onload = () => {
+    return new Promise((resolve, reject) => {
+      if (typeof (window as any).XLSX === 'undefined') {
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+        script.onload = () => loadPDFLibrary().then(resolve).catch(reject);
+        script.onerror = reject;
+        document.head.appendChild(script);
+      } else {
         loadPDFLibrary().then(resolve).catch(reject);
-      };
-      script.onerror = reject;
-      document.head.appendChild(script);
-    } else {
-      loadPDFLibrary().then(resolve).catch(reject);
-    }
-  });
-}
-
-
-async function loadPDFLibrary(): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (typeof (window as any).jsPDF === 'undefined') {
-      const script = document.createElement('script');
-      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-      script.onload = () => {
-        // Load autoTable plugin for jsPDF
-        const autoTableScript = document.createElement('script');
-        autoTableScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js';
-        autoTableScript.onload = () => resolve();
-        autoTableScript.onerror = reject;
-        document.head.appendChild(autoTableScript);
-      };
-      script.onerror = reject;
-      document.head.appendChild(script);
-    } else {
-      resolve();
-    }
-  });
-}
-
-async function exportToExcel(): Promise<void> {
-  try {
-    // Show loading state
-    const exportButton = document.getElementById('btn-export-excel') as HTMLButtonElement;
-    const originalContent = exportButton.innerHTML;
-    exportButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Exporting...';
-    exportButton.disabled = true;
-
-    // Load export libraries if not already loaded
-    await loadExportLibraries();
-
-    // Get all data from server (not just current page)
-    const allData = await fetchAllData();
-    
-    if (!allData || allData.length === 0) {
-      throw new Error('No data available for export');
-    }
-
-    // Prepare data for Excel export
-    const exportData = prepareExportData(allData);
-    
-    // Create workbook
-    const wb = (window as any).XLSX.utils.book_new();
-    
-    // Create worksheet
-    const ws = (window as any).XLSX.utils.json_to_sheet(exportData);
-    
-    // Set column widths
-    const columnWidths = columnsConfig.map(col => ({ wch: getColumnWidth(col) }));
-    ws['!cols'] = columnWidths;
-    
-    // Apply styling (basic)
-    const range = (window as any).XLSX.utils.decode_range(ws['!ref']);
-    
-    // Style header row
-    for (let col = range.s.c; col <= range.e.c; col++) {
-      const cellAddress = (window as any).XLSX.utils.encode_cell({ r: 0, c: col });
-      if (ws[cellAddress]) {
-        ws[cellAddress].s = {
-          fill: { fgColor: { rgb: "4F46E5" } },
-          font: { color: { rgb: "FFFFFF" }, bold: true },
-          alignment: { horizontal: "center", vertical: "center" }
-        };
-      }
-    }
-    
-    // Add worksheet to workbook
-    const sheetName = `${appConfig.title} - ${appConfig.submodule.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}`;
-    (window as any).XLSX.utils.book_append_sheet(wb, ws, sheetName);
-    
-    // Add metadata worksheet
-    const metaData = [
-      { Property: 'Exported By', Value: 'Dynamic Data Table System' },
-      { Property: 'Export Date', Value: new Date().toLocaleString('id-ID') },
-      { Property: 'Total Records', Value: allData.length },
-      { Property: 'Module', Value: appConfig.title },
-      { Property: 'Submodule', Value: appConfig.submodule }
-    ];
-    
-    const metaWs = (window as any).XLSX.utils.json_to_sheet(metaData);
-    (window as any).XLSX.utils.book_append_sheet(wb, metaWs, 'Export Info');
-    
-    // Generate filename
-    const timestamp = new Date().toISOString().split('T')[0];
-    const filename = `${appConfig.module}_${appConfig.submodule}_${timestamp}.xlsx`;
-    
-    // Write and download file
-    (window as any).XLSX.writeFile(wb, filename);
-    
-    // Show success message
-    showNotification('Data berhasil diekspor ke Excel!', 'success');
-
-  } catch (error) {
-    console.error('Error exporting to Excel:', error);
-    showNotification('Gagal mengekspor data ke Excel: ' + (error instanceof Error ? error.message : 'Unknown error'), 'error');
-  } finally {
-    // Reset button state
-    const exportButton = document.getElementById('btn-export-excel') as HTMLButtonElement;
-    exportButton.innerHTML = '<i class="fas fa-file-excel mr-2"></i><span class="hidden sm:inline">Export Excel</span><span class="sm:hidden">Excel</span>';
-    exportButton.disabled = false;
-  }
-}
-
-async function exportToPDF(): Promise<void> {
-  try {
-    // Show loading state
-    const exportButton = document.getElementById('btn-export-pdf') as HTMLButtonElement;
-    const originalContent = exportButton?.innerHTML || '';
-    if (exportButton) {
-      exportButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Exporting...';
-      exportButton.disabled = true;
-    }
-
-    // Load export libraries if not already loaded
-    await loadExportLibraries();
-
-    // Get all data from server
-    const allData = await fetchAllData();
-    
-    if (!allData || allData.length === 0) {
-      throw new Error('No data available for export');
-    }
-
-    // Initialize jsPDF
-    const { jsPDF } = (window as any).jspdf;
-    const doc = new jsPDF('l', 'mm', 'a4'); // landscape orientation
-
-    // Add title
-    const title = `${appConfig.title} - ${appConfig.submodule.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}`;
-    doc.setFontSize(16);
-    doc.setTextColor(79, 70, 229); // Blue color matching theme
-    doc.text(title, 20, 20);
-
-    // Add export info
-    doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100);
-    doc.text(`Exported on: ${new Date().toLocaleString('id-ID')}`, 20, 30);
-    doc.text(`Total Records: ${allData.length}`, 20, 36);
-
-    // Prepare table data
-    const tableColumns = columnsConfig
-      .filter(col => col.data !== 'id') // Exclude ID column for cleaner PDF
-      .map(col => col.title);
-
-    const tableRows = allData.map(row => 
-      columnsConfig
-        .filter(col => col.data !== 'id')
-        .map(col => formatCellForPDF(row[col.data], col))
-    );
-
-    // Generate PDF table
-    (doc as any).autoTable({
-      head: [tableColumns],
-      body: tableRows,
-      startY: 45,
-      styles: {
-        fontSize: 8,
-        cellPadding: 3,
-        overflow: 'linebreak',
-        valign: 'middle'
-      },
-      headStyles: {
-        fillColor: [79, 70, 229], // Blue header
-        textColor: [255, 255, 255],
-        fontStyle: 'bold',
-        halign: 'center'
-      },
-      alternateRowStyles: {
-        fillColor: [248, 250, 252] // Light gray for alternate rows
-      },
-      columnStyles: getColumnStylesForPDF(),
-      didDrawPage: function (data: any) {
-        // Add page numbers
-        const pageCount = doc.internal.getNumberOfPages();
-        const currentPage = data.pageNumber;
-        doc.setFontSize(8);
-        doc.setTextColor(100);
-        doc.text(
-          `Page ${currentPage} of ${pageCount}`,
-          data.settings.margin.left,
-          doc.internal.pageSize.height - 10
-        );
       }
     });
+  }
 
-    // Generate filename
-    const timestamp = new Date().toISOString().split('T')[0];
-    const filename = `${appConfig.module}_${appConfig.submodule}_${timestamp}.pdf`;
+  async function loadPDFLibrary(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (typeof (window as any).jsPDF === 'undefined') {
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+        script.onload = () => {
+          const autoTableScript = document.createElement('script');
+          autoTableScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js';
+          autoTableScript.onload = () => resolve();
+          autoTableScript.onerror = reject;
+          document.head.appendChild(autoTableScript);
+        };
+        script.onerror = reject;
+        document.head.appendChild(script);
+      } else {
+        resolve();
+      }
+    });
+  }
 
-    // Save PDF
-    doc.save(filename);
+  async function exportToExcel(): Promise<void> {
+    try {
+      const exportButton = document.getElementById('btn-export-excel') as HTMLButtonElement;
+      exportButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Exporting...';
+      exportButton.disabled = true;
 
-    // Show success message
-    showNotification('Data berhasil diekspor ke PDF!', 'success');
+      await loadExportLibraries();
+      const allData = await fetchAllData();
+      
+      if (!allData || allData.length === 0) {
+        throw new Error('No data available for export');
+      }
 
-  } catch (error) {
-    console.error('Error exporting to PDF:', error);
-    showNotification('Gagal mengekspor data ke PDF: ' + (error instanceof Error ? error.message : 'Unknown error'), 'error');
-  } finally {
-    // Reset button state
-    const exportButton = document.getElementById('btn-export-pdf') as HTMLButtonElement;
-    if (exportButton) {
-      exportButton.innerHTML = '<i class="fas fa-file-pdf mr-2"></i><span class="hidden sm:inline">Export PDF</span><span class="sm:hidden">PDF</span>';
+      const exportData = prepareExportData(allData);
+      const wb = (window as any).XLSX.utils.book_new();
+      const ws = (window as any).XLSX.utils.json_to_sheet(exportData);
+      
+      const sheetName = `${appConfig.title} - ${appConfig.submodule.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}`;
+      (window as any).XLSX.utils.book_append_sheet(wb, ws, sheetName);
+      
+      const timestamp = new Date().toISOString().split('T')[0];
+      const filename = `${appConfig.module}_${appConfig.submodule}_${timestamp}.xlsx`;
+      
+      (window as any).XLSX.writeFile(wb, filename);
+      showNotification('Data berhasil diekspor ke Excel!', 'success');
+
+    } catch (error) {
+      console.error('Error exporting to Excel:', error);
+      showNotification('Gagal mengekspor data ke Excel', 'error');
+    } finally {
+      const exportButton = document.getElementById('btn-export-excel') as HTMLButtonElement;
+      exportButton.innerHTML = '<i class="fas fa-file-excel mr-2"></i><span class="hidden sm:inline">Export Excel</span><span class="sm:hidden">Excel</span>';
       exportButton.disabled = false;
     }
   }
-}
 
-async function fetchAllData(): Promise<any[]> {
-  try {
-    // Get current filters
-    const filters: any = {};
-    
-    const dateFrom = (document.getElementById('filter-date-from') as HTMLInputElement)?.value;
-    const dateTo = (document.getElementById('filter-date-to') as HTMLInputElement)?.value;
-    
-    if (dateFrom) filters.date_from = dateFrom;
-    if (dateTo) filters.date_to = dateTo;
-    
-    // Add field-specific filters
-    fieldsConfig.forEach(field => {
-      if (field.options) {
-        const filterValue = (document.getElementById(`filter-${field.name}`) as HTMLSelectElement)?.value;
-        if (filterValue) filters[field.name] = filterValue;
+  async function exportToPDF(): Promise<void> {
+    try {
+      const exportButton = document.getElementById('btn-export-pdf') as HTMLButtonElement;
+      if (exportButton) {
+        exportButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Exporting...';
+        exportButton.disabled = true;
       }
-    });
 
-    // Build query string
-    const queryParams = new URLSearchParams({
-      ...filters,
-      per_page: '1000', // Get large number of records
-      export: '1' // Indicate this is for export
-    });
+      await loadExportLibraries();
+      const allData = await fetchAllData();
+      
+      if (!allData || allData.length === 0) {
+        throw new Error('No data available for export');
+      }
 
-    const response = await makeAuthenticatedRequest(`${apiEndpoints.list}?${queryParams}`);
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch data: ${response.status}`);
+      const { jsPDF } = (window as any).jspdf;
+      const doc = new jsPDF('l', 'mm', 'a4');
+
+      const title = `${appConfig.title} - ${appConfig.submodule.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}`;
+      doc.setFontSize(16);
+      doc.setTextColor(79, 70, 229);
+      doc.text(title, 20, 20);
+
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      doc.text(`Exported on: ${new Date().toLocaleString('id-ID')}`, 20, 30);
+      doc.text(`Total Records: ${allData.length}`, 20, 36);
+
+      const tableColumns = columnsConfig
+        .filter(col => 
+          col.data !== 'id' && 
+          col.data !== 'actions' &&
+          col.data !== 'created_at' &&
+          col.data !== 'updated_at'
+        )
+        .map(col => col.title);
+
+      const tableRows = allData.map(row => 
+        columnsConfig
+          .filter(col => 
+            col.data !== 'id' && 
+            col.data !== 'actions' &&
+            col.data !== 'created_at' &&
+            col.data !== 'updated_at'
+          )
+          .map(col => formatCellForPDF(row[col.data], col))
+      );
+
+      (doc as any).autoTable({
+        head: [tableColumns],
+        body: tableRows,
+        startY: 45,
+        styles: {
+          fontSize: 8,
+          cellPadding: 3
+        },
+        headStyles: {
+          fillColor: [79, 70, 229],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          halign: 'center'
+        }
+      });
+
+      const timestamp = new Date().toISOString().split('T')[0];
+      const filename = `${appConfig.module}_${appConfig.submodule}_${timestamp}.pdf`;
+      doc.save(filename);
+
+      showNotification('Data berhasil diekspor ke PDF!', 'success');
+
+    } catch (error) {
+      console.error('Error exporting to PDF:', error);
+      showNotification('Gagal mengekspor data ke PDF', 'error');
+    } finally {
+      const exportButton = document.getElementById('btn-export-pdf') as HTMLButtonElement;
+      if (exportButton) {
+        exportButton.innerHTML = '<i class="fas fa-file-pdf mr-2"></i><span class="hidden sm:inline">Export PDF</span><span class="sm:hidden">PDF</span>';
+        exportButton.disabled = false;
+      }
     }
+  }
 
-    const result = await response.json();
-    return result.data || result;
+  async function fetchAllData(): Promise<any[]> {
+    try {
+      const filters: any = {};
+      
+      const dateFrom = (document.getElementById('filter-date-from') as HTMLInputElement)?.value;
+      const dateTo = (document.getElementById('filter-date-to') as HTMLInputElement)?.value;
+      
+      if (dateFrom) filters.date_from = dateFrom;
+      if (dateTo) filters.date_to = dateTo;
+      
+      fieldsConfig.forEach(field => {
+        if (field.options) {
+          const filterValue = (document.getElementById(`filter-${field.name}`) as HTMLSelectElement)?.value;
+          if (filterValue) filters[field.name] = filterValue;
+        }
+      });
 
-  } catch (error) {
-    console.error('Error fetching all data:', error);
-    throw error;
+      const queryParams = new URLSearchParams({
+        ...filters,
+        per_page: '1000',
+        export: '1'
+      });
+
+      const response = await makeAuthenticatedRequest(`${apiEndpoints.list}?${queryParams}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch data: ${response.status}`);
+      }
+
+      const result = await response.json();
+      return result.data || result;
+
+    } catch (error) {
+      console.error('Error fetching all data:', error);
+      throw error;
+    }
+  }
+
+  function prepareExportData(data: any[]): any[] {
+    return data.map(row => {
+      const exportRow: any = {};
+      
+      columnsConfig
+        .filter(col => 
+          col.data !== 'id' && 
+          col.data !== 'actions' &&
+          col.data !== 'created_at' &&
+          col.data !== 'updated_at'
+        )
+        .forEach(col => {
+          let value = row[col.data];
+          
+          if (col.type === 'currency' && value != null) {
+            value = formatCurrency(value);
+          } else if (col.type === 'date' && value) {
+            value = formatDate(value);
+          } else if (col.type === 'boolean') {
+            value = value ? 'Ya' : 'Tidak';
+          } else if (value == null) {
+            value = '-';
+          }
+          
+          exportRow[col.title] = value;
+        });
+      
+      return exportRow;
+    });
+  }
+
+  function formatCellForPDF(value: any, col: ColumnDefinition): string {
+    if (value == null || value === '') return '-';
+    
+    switch (col.type) {
+      case 'currency':
+        return formatCurrency(value);
+      case 'date':
+        return formatDate(value);
+      case 'boolean':
+        return value ? 'Ya' : 'Tidak';
+      default:
+        return String(value);
+    }
+  }
+
+  function showNotification(message: string, type: 'success' | 'error' = 'success'): void {
+  if (typeof (window as any).showNotificationModal === 'function') {
+    (window as any).showNotificationModal({
+      type: type,
+      title: type === 'success' ? 'Berhasil!' : 'Gagal!',
+      message: message,
+      autoClose: true,
+      duration: 3000
+    });
+  } else {
+    // Fallback jika modal belum load
+    alert(message);
   }
 }
-
-function prepareExportData(data: any[]): any[] {
-  return data.map(row => {
-    const exportRow: any = {};
-    
-    columnsConfig.forEach(col => {
-      let value = row[col.data];
-      
-      // Format values based on column type
-      if (col.type === 'currency' && value != null) {
-        value = formatCurrency(value);
-      } else if (col.type === 'date' && value) {
-        value = formatDate(value);
-      } else if (col.type === 'boolean') {
-        value = value ? 'Ya' : 'Tidak';
-      } else if (value == null) {
-        value = '-';
-      }
-      
-      exportRow[col.title] = value;
-    });
-    
-    return exportRow;
-  });
-}
-
-function getColumnWidth(col: ColumnDefinition): number {
-  // Return appropriate column width based on column type and title length
-  if (col.type === 'currency') return 15;
-  if (col.type === 'date') return 12;
-  if (col.type === 'boolean') return 8;
-  if (col.title.length > 20) return 25;
-  if (col.title.length > 15) return 20;
-  return 15;
-}
-
-function getColumnStylesForPDF(): any {
-  const styles: any = {};
-  
-  columnsConfig.forEach((col, index) => {
-    if (col.data === 'id') return; // Skip ID column
-    
-    const adjustedIndex = columnsConfig.findIndex(c => c.data === col.data && c.data !== 'id');
-    
-    if (col.type === 'currency') {
-      styles[adjustedIndex] = { halign: 'right' };
-    } else if (col.type === 'date' || col.type === 'datetime') {
-      styles[adjustedIndex] = { halign: 'center' };
-    } else if (col.type === 'boolean') {
-      styles[adjustedIndex] = { halign: 'center' };
-    }
-  });
-  
-  return styles;
-}
-
-function formatCellForPDF(value: any, col: ColumnDefinition): string {
-  if (value == null || value === '') return '-';
-  
-  switch (col.type) {
-    case 'currency':
-      return formatCurrency(value);
-    case 'date':
-      return formatDate(value);
-    case 'boolean':
-      return value ? 'Ya' : 'Tidak';
-    default:
-      return String(value);
-  }
-}
-
-function showNotification(message: string, type: 'success' | 'error' = 'success'): void {
-  // Create notification element
-  const notification = document.createElement('div');
-  notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 transform translate-x-full ${
-    type === 'success' 
-      ? 'bg-green-500 text-white' 
-      : 'bg-red-500 text-white'
-  }`;
-  
-  notification.innerHTML = `
-    <div class="flex items-center">
-      <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} mr-2"></i>
-      <span>${message}</span>
-      <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
-        <i class="fas fa-times"></i>
-      </button>
-    </div>
-  `;
-  
-  // Add to page
-  document.body.appendChild(notification);
-  
-  // Animate in
-  setTimeout(() => {
-    notification.classList.remove('translate-x-full');
-  }, 100);
-  
-  // Auto remove after 5 seconds
-  setTimeout(() => {
-    notification.classList.add('translate-x-full');
-    setTimeout(() => {
-      notification.remove();
-    }, 300);
-  }, 5000);
-}
-
 
   function setupUI(): void {
-    // Setup page title
     const pageTitle = document.getElementById('page-title');
     if (pageTitle) {
       pageTitle.innerHTML = `
@@ -1108,88 +757,82 @@ function showNotification(message: string, type: 'success' | 'error' = 'success'
       `;
     }
 
-    // Setup stats cards
     setupStatsCards();
-
-    // Setup filters
     setupFilters();
   }
 
   function setupStatsCards(): void {
-  const statsContainer = document.getElementById('stats-cards');
-  if (!statsContainer) return;
+    const statsContainer = document.getElementById('stats-cards');
+    if (!statsContainer) return;
 
-  statsContainer.innerHTML = `
-    <div class="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-lg card-hover">
-      <div class="flex items-center justify-between">
-        <div class="flex-1 min-w-0">
-          <p class="text-gray-600 text-xs md:text-sm font-medium mb-1">Total Transaksi</p>
-          <p class="text-xl md:text-3xl font-bold text-${appConfig.color}-600 truncate" id="total-transactions">0</p>
-        </div>
-        <div class="w-12 h-12 md:w-16 md:h-16 bg-${appConfig.color}-100 rounded-full flex items-center justify-center ml-3 flex-shrink-0">
-          <i class="fas fa-database text-${appConfig.color}-600 text-lg md:text-2xl"></i>
-        </div>
-      </div>
-    </div>
-    
-    <div class="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-lg card-hover">
-      <div class="flex items-center justify-between">
-        <div class="flex-1 min-w-0">
-          <p class="text-gray-600 text-xs md:text-sm font-medium mb-1">Transaksi Bulan Ini</p>
-          <p class="text-xl md:text-3xl font-bold text-green-600 truncate" id="transactions-this-month">0</p>
-        </div>
-        <div class="w-12 h-12 md:w-16 md:h-16 bg-green-100 rounded-full flex items-center justify-center ml-3 flex-shrink-0">
-          <i class="fas fa-calendar text-green-600 text-lg md:text-2xl"></i>
+    statsContainer.innerHTML = `
+      <div class="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-lg card-hover">
+        <div class="flex items-center justify-between">
+          <div class="flex-1 min-w-0">
+            <p class="text-gray-600 text-xs md:text-sm font-medium mb-1">Total Transaksi</p>
+            <p class="text-xl md:text-3xl font-bold text-${appConfig.color}-600 truncate" id="total-transactions">0</p>
+          </div>
+          <div class="w-12 h-12 md:w-16 md:h-16 bg-${appConfig.color}-100 rounded-full flex items-center justify-center ml-3 flex-shrink-0">
+            <i class="fas fa-database text-${appConfig.color}-600 text-lg md:text-2xl"></i>
+          </div>
         </div>
       </div>
-    </div>
-    
-    <div class="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-lg card-hover">
-      <div class="flex items-center justify-between">
-        <div class="flex-1 min-w-0">
-          <p class="text-gray-600 text-xs md:text-sm font-medium mb-1">Total Uang Masuk</p>
-          <p class="text-xl md:text-3xl font-bold text-green-600 truncate" id="total-income">Rp 0</p>
-        </div>
-        <div class="w-12 h-12 md:w-16 md:h-16 bg-green-100 rounded-full flex items-center justify-center ml-3 flex-shrink-0">
-          <i class="fas fa-arrow-up text-green-600 text-lg md:text-2xl"></i>
-        </div>
-      </div>
-    </div>
-    
-    <div class="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-lg card-hover">
-      <div class="flex items-center justify-between">
-        <div class="flex-1 min-w-0">
-          <p class="text-gray-600 text-xs md:text-sm font-medium mb-1">Total Uang Keluar</p>
-          <p class="text-xl md:text-3xl font-bold text-red-600 truncate" id="total-outcome">Rp 0</p>
-        </div>
-        <div class="w-12 h-12 md:w-16 md:h-16 bg-red-100 rounded-full flex items-center justify-center ml-3 flex-shrink-0">
-          <i class="fas fa-arrow-down text-red-600 text-lg md:text-2xl"></i>
+      
+      <div class="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-lg card-hover">
+        <div class="flex items-center justify-between">
+          <div class="flex-1 min-w-0">
+            <p class="text-gray-600 text-xs md:text-sm font-medium mb-1">Transaksi Bulan Ini</p>
+            <p class="text-xl md:text-3xl font-bold text-green-600 truncate" id="transactions-this-month">0</p>
+          </div>
+          <div class="w-12 h-12 md:w-16 md:h-16 bg-green-100 rounded-full flex items-center justify-center ml-3 flex-shrink-0">
+            <i class="fas fa-calendar text-green-600 text-lg md:text-2xl"></i>
+          </div>
         </div>
       </div>
-    </div>
-    
-    <div class="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-lg card-hover">
-      <div class="flex items-center justify-between">
-        <div class="flex-1 min-w-0">
-          <p class="text-gray-600 text-xs md:text-sm font-medium mb-1">Saldo Bersih</p>
-          <p class="text-xl md:text-3xl font-bold truncate" id="net-balance">Rp 0</p>
-        </div>
-        <div class="w-12 h-12 md:w-16 md:h-16 bg-purple-100 rounded-full flex items-center justify-center ml-3 flex-shrink-0">
-          <i class="fas fa-wallet text-purple-600 text-lg md:text-2xl"></i>
+      
+      <div class="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-lg card-hover">
+        <div class="flex items-center justify-between">
+          <div class="flex-1 min-w-0">
+            <p class="text-gray-600 text-xs md:text-sm font-medium mb-1">Total Uang Masuk</p>
+            <p class="text-xl md:text-3xl font-bold text-green-600 truncate" id="total-income">Rp 0</p>
+          </div>
+          <div class="w-12 h-12 md:w-16 md:h-16 bg-green-100 rounded-full flex items-center justify-center ml-3 flex-shrink-0">
+            <i class="fas fa-arrow-up text-green-600 text-lg md:text-2xl"></i>
+          </div>
         </div>
       </div>
-    </div>
-  `;
-}
+      
+      <div class="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-lg card-hover">
+        <div class="flex items-center justify-between">
+          <div class="flex-1 min-w-0">
+            <p class="text-gray-600 text-xs md:text-sm font-medium mb-1">Total Uang Keluar</p>
+            <p class="text-xl md:text-3xl font-bold text-red-600 truncate" id="total-outcome">Rp 0</p>
+          </div>
+          <div class="w-12 h-12 md:w-16 md:h-16 bg-red-100 rounded-full flex items-center justify-center ml-3 flex-shrink-0">
+            <i class="fas fa-arrow-down text-red-600 text-lg md:text-2xl"></i>
+          </div>
+        </div>
+      </div>
+      
+      <div class="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-lg card-hover">
+        <div class="flex items-center justify-between">
+          <div class="flex-1 min-w-0">
+            <p class="text-gray-600 text-xs md:text-sm font-medium mb-1">Saldo Bersih</p>
+            <p class="text-xl md:text-3xl font-bold truncate" id="net-balance">Rp 0</p>
+          </div>
+          <div class="w-12 h-12 md:w-16 md:h-16 bg-purple-100 rounded-full flex items-center justify-center ml-3 flex-shrink-0">
+            <i class="fas fa-wallet text-purple-600 text-lg md:text-2xl"></i>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   function setupFilters(): void {
     const filterContainer = document.getElementById('filter-container');
     if (!filterContainer || !fieldsConfig.length) return;
 
-    // Create filters based on field configuration
-    let filtersHTML = '';
-
-    // Date range filters (common)
-    filtersHTML += `
+    let filtersHTML = `
       <div>
         <label class="block text-gray-700 text-sm font-medium mb-2">
           <i class="fas fa-calendar-alt mr-1 text-gray-500"></i>
@@ -1209,7 +852,6 @@ function showNotification(message: string, type: 'success' | 'error' = 'success'
       </div>
     `;
 
-    // Add field-specific filters for enum/select fields
     fieldsConfig.forEach(field => {
       if (field.options && field.options.length > 0) {
         filtersHTML += `
@@ -1228,7 +870,6 @@ function showNotification(message: string, type: 'success' | 'error' = 'success'
       }
     });
 
-    // Reset button
     filtersHTML += `
       <div class="flex flex-col justify-end">
         <button onclick="resetFilters()" 
@@ -1241,122 +882,105 @@ function showNotification(message: string, type: 'success' | 'error' = 'success'
     filterContainer.innerHTML = filtersHTML;
   }
 
- async function initializeDataTable(): Promise<void> {
-  try {
-    // Destroy existing table if exists
-    if (dataTable) {
-      dataTable.destroy();
-      dataTable = null;
-    }
-
-    // Build columns configuration for DataTables
-    const columns: DataTableColumn[] = columnsConfig.map(col => ({
-      data: col.data,
-      title: col.title,
-      orderable: col.sortable !== false,
-      searchable: col.searchable !== false,
-      className: getColumnClassName(col),
-      render: getColumnRenderer(col)
-    }));
-
-    // Add action column
-    columns.push({
-      data: null,
-      title: 'Actions',
-      orderable: false,
-      searchable: false,
-      className: 'text-center',
-      render: function(data: any, type: string, row: any) {
-        return `
-          <div class="btn-group flex gap-1 justify-center">
-            <button onclick="editRecord('${row.id}')" 
-                    class="btn btn-sm btn-outline-primary" 
-                    title="Edit">
-              <i class="fas fa-edit"></i>
-            </button>
-            <button onclick="deleteRecord('${row.id}')" 
-                    class="btn btn-sm btn-outline-danger" 
-                    title="Delete">
-              <i class="fas fa-trash"></i>
-            </button>
-          </div>
-        `;
+  async function initializeDataTable(): Promise<void> {
+    try {
+      if (dataTable) {
+        dataTable.destroy();
+        dataTable = null;
       }
-    });
 
-    // Load DataTables library if not loaded
-    await loadDataTablesLibrary();
+      const columns: DataTableColumn[] = columnsConfig.map(col => ({
+        data: col.data,
+        title: col.title,
+        orderable: col.sortable !== false,
+        searchable: col.searchable !== false,
+        className: getColumnClassName(col),
+        render: getColumnRenderer(col)
+      }));
 
-    // Initialize DataTable dengan error handling yang lebih baik
-    dataTable = (window as any).$('#dynamic-table').DataTable({
-      processing: true,
-      serverSide: true,
-      ajax: {
-        url: apiEndpoints.list,
-        type: 'GET',
-        headers: getAuthHeaders(),
-        data: function(d: any) {
-          // Add custom filters
-          const dateFrom = (document.getElementById('filter-date-from') as HTMLInputElement)?.value;
-          const dateTo = (document.getElementById('filter-date-to') as HTMLInputElement)?.value;
-          
-          if (dateFrom) d.date_from = dateFrom;
-          if (dateTo) d.date_to = dateTo;
-          
-          // Add field-specific filters
-          fieldsConfig.forEach(field => {
-            if (field.options) {
-              const filterValue = (document.getElementById(`filter-${field.name}`) as HTMLSelectElement)?.value;
-              if (filterValue) d[field.name] = filterValue;
-            }
-          });
-          
-          return d;
-        },
-        error: function(xhr: any, error: string, code: string) {
-          console.warn('DataTable AJAX error (non-critical):', error, code);
-          // Jangan tampilkan error state, biarkan DataTable handle dengan "No data available"
+      columns.push({
+        data: null,
+        title: 'Actions',
+        orderable: false,
+        searchable: false,
+        className: 'text-center',
+        render: function(data: any, type: string, row: any) {
+          return `
+            <div class="btn-group flex gap-1 justify-center">
+              <button onclick="editRecord('${row.id}')" 
+                      class="btn btn-sm btn-outline-primary" 
+                      title="Edit">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button onclick="deleteRecord('${row.id}')" 
+                      class="btn btn-sm btn-outline-danger" 
+                      title="Delete">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          `;
         }
-      },
-      columns,
-      responsive: true,
-      pageLength: 10,
-      lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
-      dom: '<"modern-datatable-header"<"search-container"f><"length-container"l>>rtip',
-      language: {
-        url: "https://cdn.datatables.net/plug-ins/1.13.5/i18n/id.json",
-        searchPlaceholder: "Cari data...",
-        search: "",
-        lengthMenu: "Tampilkan _MENU_ data",
-        processing: "Memuat data...",
-        emptyTable: "Tidak ada data tersedia", // Pesan ketika tidak ada data
-        zeroRecords: "Tidak ditemukan data yang sesuai", // Pesan ketika tidak ada hasil pencarian
-        info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
-        infoEmpty: "Menampilkan 0 sampai 0 dari 0 data",
-        infoFiltered: "(disaring dari _MAX_ total data)"
-      },
-      drawCallback: function(settings: any) {
-        updateStats(settings);
-      }
-    });
+      });
 
-    console.log('DataTable initialized successfully');
+      await loadDataTablesLibrary();
 
-  } catch (error) {
-    console.warn('Error initializing DataTable (non-critical):', error);
-    // Jangan throw error, biarkan aplikasi tetap berjalan
-    // DataTable akan menampilkan "No data available" secara default
+      dataTable = (window as any).$('#dynamic-table').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+          url: apiEndpoints.list,
+          type: 'GET',
+          headers: getAuthHeaders(),
+          data: function(d: any) {
+            const dateFrom = (document.getElementById('filter-date-from') as HTMLInputElement)?.value;
+            const dateTo = (document.getElementById('filter-date-to') as HTMLInputElement)?.value;
+            
+            if (dateFrom) d.date_from = dateFrom;
+            if (dateTo) d.date_to = dateTo;
+            
+            fieldsConfig.forEach(field => {
+              if (field.options) {
+                const filterValue = (document.getElementById(`filter-${field.name}`) as HTMLSelectElement)?.value;
+                if (filterValue) d[field.name] = filterValue;
+              }
+            });
+            
+            return d;
+          },
+          error: function(xhr: any, error: string, code: string) {
+            console.warn('DataTable AJAX error:', error, code);
+          }
+        },
+        columns,
+        responsive: true,
+        pageLength: 10,
+        lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+        dom: '<"modern-datatable-header"<"search-container"f><"length-container"l>>rtip',
+        language: {
+          url: "https://cdn.datatables.net/plug-ins/1.13.5/i18n/id.json",
+          searchPlaceholder: "Cari data...",
+          search: "",
+          lengthMenu: "Tampilkan _MENU_ data",
+          processing: "Memuat data...",
+          emptyTable: "Tidak ada data tersedia",
+          zeroRecords: "Tidak ditemukan data yang sesuai",
+          info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
+          infoEmpty: "Menampilkan 0 sampai 0 dari 0 data",
+          infoFiltered: "(disaring dari _MAX_ total data)"
+        }
+      });
+
+    } catch (error) {
+      console.warn('Error initializing DataTable:', error);
+    }
   }
-}
+
   async function loadDataTablesLibrary(): Promise<void> {
     return new Promise((resolve, reject) => {
-      // Check if jQuery is loaded
       if (typeof (window as any).$ === 'undefined') {
         const jquery = document.createElement('script');
         jquery.src = 'https://code.jquery.com/jquery-3.6.0.min.js';
-        jquery.onload = () => {
-          loadDataTablesScripts().then(resolve).catch(reject);
-        };
+        jquery.onload = () => loadDataTablesScripts().then(resolve).catch(reject);
         jquery.onerror = reject;
         document.head.appendChild(jquery);
       } else if (typeof (window as any).$.fn.DataTable === 'undefined') {
@@ -1383,7 +1007,6 @@ function showNotification(message: string, type: 'success' | 'error' = 'success'
       });
     }
 
-    // Load CSS
     const css = document.createElement('link');
     css.rel = 'stylesheet';
     css.href = 'https://cdn.datatables.net/1.13.5/css/jquery.dataTables.min.css';
@@ -1414,7 +1037,7 @@ function showNotification(message: string, type: 'success' | 'error' = 'success'
   function getColumnRenderer(col: ColumnDefinition): Function | undefined {
     if (col.type === 'currency') {
       return function(data: any, type: string, row: any) {
-        if (type === 'display' || type === 'type') {
+        if (type === 'display' || type === 'filter') {
           return formatCurrency(data);
         }
         return data;
@@ -1423,7 +1046,7 @@ function showNotification(message: string, type: 'success' | 'error' = 'success'
     
     if (col.type === 'date') {
       return function(data: any, type: string, row: any) {
-        if (type === 'display' || type === 'type') {
+        if (type === 'display' || type === 'filter') {
           return formatDate(data);
         }
         return data;
@@ -1432,7 +1055,7 @@ function showNotification(message: string, type: 'success' | 'error' = 'success'
     
     if (col.type === 'boolean') {
       return function(data: any, type: string, row: any) {
-        if (type === 'display' || type === 'type') {
+        if (type === 'display' || type === 'filter') {
           return data ? '<span class="badge badge-success">Ya</span>' : '<span class="badge badge-secondary">Tidak</span>';
         }
         return data;
@@ -1442,50 +1065,23 @@ function showNotification(message: string, type: 'success' | 'error' = 'success'
     return undefined;
   }
 
- // Replace the setupEventListeners function in your original script with this updated version
-
-function setupEventListeners(): void {
-  // Add button
-  document.getElementById('btn-add')?.addEventListener('click', () => openModal());
-  
-  // Export buttons - Updated with PDF export
-  document.getElementById('btn-export-excel')?.addEventListener('click', exportToExcel);
-  document.getElementById('btn-export-pdf')?.addEventListener('click', exportToPDF);
-  document.getElementById('btn-print')?.addEventListener('click', printData);
-  
-  // Filter changes
-  document.getElementById('filter-date-from')?.addEventListener('change', applyFilters);
-  document.getElementById('filter-date-to')?.addEventListener('change', applyFilters);
-  
-  // Field-specific filters
-  fieldsConfig.forEach(field => {
-    if (field.options) {
-      document.getElementById(`filter-${field.name}`)?.addEventListener('change', applyFilters);
-    }
-  });
-  
-  // Form submission
-  document.getElementById('data-form')?.addEventListener('submit', handleFormSubmit);
-  
-  // Keyboard shortcuts for export functions
-  document.addEventListener('keydown', (e) => {
-    // Ctrl+E for Excel export
-    if (e.ctrlKey && e.key === 'e') {
-      e.preventDefault();
-      exportToExcel();
-    }
-    // Ctrl+P for PDF export (override default print)
-    if (e.ctrlKey && e.key === 'p') {
-      e.preventDefault();
-      exportToPDF();
-    }
-    // Ctrl+Shift+P for print
-    if (e.ctrlKey && e.shiftKey && e.key === 'P') {
-      e.preventDefault();
-      printData();
-    }
-  });
-}
+  function setupEventListeners(): void {
+    document.getElementById('btn-add')?.addEventListener('click', () => openModal());
+    document.getElementById('btn-export-excel')?.addEventListener('click', exportToExcel);
+    document.getElementById('btn-export-pdf')?.addEventListener('click', exportToPDF);
+    document.getElementById('btn-print')?.addEventListener('click', printData);
+    
+    document.getElementById('filter-date-from')?.addEventListener('change', applyFilters);
+    document.getElementById('filter-date-to')?.addEventListener('change', applyFilters);
+    
+    fieldsConfig.forEach(field => {
+      if (field.options) {
+        document.getElementById(`filter-${field.name}`)?.addEventListener('change', applyFilters);
+      }
+    });
+    
+    document.getElementById('data-form')?.addEventListener('submit', handleFormSubmit);
+  }
 
   function applyFilters(): void {
     if (dataTable) {
@@ -1494,11 +1090,9 @@ function setupEventListeners(): void {
   }
 
   function resetFilters(): void {
-    // Reset date filters
     (document.getElementById('filter-date-from') as HTMLInputElement).value = '';
     (document.getElementById('filter-date-to') as HTMLInputElement).value = '';
     
-    // Reset field filters
     fieldsConfig.forEach(field => {
       if (field.options) {
         (document.getElementById(`filter-${field.name}`) as HTMLSelectElement).value = '';
@@ -1539,136 +1133,131 @@ function setupEventListeners(): void {
   }
 
   function generateForm(): void {
-  const container = document.getElementById('form-fields');
-  if (!container || !fieldsConfig.length) return;
+    const container = document.getElementById('form-fields');
+    if (!container || !fieldsConfig.length) return;
 
-  let formHTML = '';
-
-  fieldsConfig.forEach(field => {
-    const fieldId = `field-${field.name}`;
-    const isRequired = field.required ? 'required' : '';
-    const requiredMark = field.required ? '<span class="text-red-500">*</span>' : '';
-
-    formHTML += `<div class="form-group">`;
-    formHTML += `<label class="block text-gray-700 text-sm font-medium mb-2" for="${fieldId}">
-                   ${field.label} ${requiredMark}
-                 </label>`;
-
-    switch (field.type) {
-      case 'text':
-      case 'email':
-      case 'url':
-        formHTML += `<input type="${field.type}" id="${fieldId}" name="${field.name}" ${isRequired}
-                            class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${appConfig.color}-500 focus:border-transparent transition-all duration-200"
-                            placeholder="Masukkan ${field.label.toLowerCase()}" />`;
-        break;
-
-      case 'number':
-        const step = '1';
-        const min = field.validation?.min || '0';
-        formHTML += `<input type="number" id="${fieldId}" name="${field.name}" ${isRequired}
-                            class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${appConfig.color}-500 focus:border-transparent transition-all duration-200"
-                            placeholder="0" step="${step}" min="${min}" />`;
-        break;
-
-      case 'currency':
-        formHTML += `<div class="relative">
-                      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">Rp</span>
-                      <input type="text" id="${fieldId}" name="${field.name}" ${isRequired}
-                            class="w-full pl-12 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${appConfig.color}-500 focus:border-transparent transition-all duration-200"
-                            placeholder="0" 
-                            oninput="formatCurrencyInput(this)" 
-                            onblur="validateCurrencyInput(this)" />
-                    </div>`;
-        break;
-
-      case 'date':
-        formHTML += `<input type="date" id="${fieldId}" name="${field.name}" ${isRequired}
-                            class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${appConfig.color}-500 focus:border-transparent transition-all duration-200" />`;
-        break;
-
-      case 'datetime':
-        formHTML += `<input type="datetime-local" id="${fieldId}" name="${field.name}" ${isRequired}
-                            class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${appConfig.color}-500 focus:border-transparent transition-all duration-200" />`;
-        break;
-
-      case 'select':
-        formHTML += `<select id="${fieldId}" name="${field.name}" ${isRequired}
-                            class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${appConfig.color}-500 focus:border-transparent transition-all duration-200">
-                       <option value="">Pilih ${field.label}</option>`;
-        if (field.options) {
-          field.options.forEach(option => {
-            // Capitalize first letter of each word
-            const displayText = option
-              .split(' ')
-              .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-              .join(' ');
-            formHTML += `<option value="${option}">${displayText}</option>`;
-          });
-        }
-        formHTML += `</select>`;
-        break;
-
-      case 'textarea':
-        formHTML += `<textarea id="${fieldId}" name="${field.name}" ${isRequired}
-                              class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${appConfig.color}-500 focus:border-transparent transition-all duration-200 resize-none"
-                              rows="3" placeholder="Masukkan ${field.label.toLowerCase()}"></textarea>`;
-        break;
-
-      case 'boolean':
-        formHTML += `<div class="flex items-center space-x-3">
-                       <input type="checkbox" id="${fieldId}" name="${field.name}" 
-                              class="w-4 h-4 text-${appConfig.color}-600 bg-gray-100 border-gray-300 rounded focus:ring-${appConfig.color}-500 focus:ring-2" />
-                       <label for="${fieldId}" class="text-sm font-medium text-gray-700">${field.label}</label>
-                     </div>`;
-        break;
-
-      default:
-        formHTML += `<input type="text" id="${fieldId}" name="${field.name}" ${isRequired}
-                            class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${appConfig.color}-500 focus:border-transparent transition-all duration-200"
-                            placeholder="Masukkan ${field.label.toLowerCase()}" />`;
-    }
-
-    formHTML += `</div>`;
-  });
-
-  container.innerHTML = formHTML;
-}
-
-  async function loadRecordData(id: string): Promise<void> {
-  try {
-    const response = await makeAuthenticatedRequest(apiEndpoints.show.replace('{id}', id));
-
-    if (!response.ok) {
-      throw new Error(`Failed to load record: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const recordData = data.data || data;
+    let formHTML = '';
 
     fieldsConfig.forEach(field => {
-      const fieldElement = document.getElementById(`field-${field.name}`) as HTMLInputElement;
-      if (fieldElement && recordData[field.name] !== undefined) {
-        if (field.type === 'boolean') {
-          fieldElement.checked = !!recordData[field.name];
-        } else if (field.type === 'currency') {
-          // Format currency untuk display
-          const value = recordData[field.name];
-          if (value) {
-            fieldElement.value = parseInt(value).toLocaleString('id-ID');
-            fieldElement.dataset.rawValue = String(value);
+      const fieldId = `field-${field.name}`;
+      const isRequired = field.required ? 'required' : '';
+      const requiredMark = field.required ? '<span class="text-red-500">*</span>' : '';
+
+      formHTML += `<div class="form-group">`;
+      formHTML += `<label class="block text-gray-700 text-sm font-medium mb-2" for="${fieldId}">
+                     ${field.label} ${requiredMark}
+                   </label>`;
+
+      switch (field.type) {
+        case 'text':
+        case 'email':
+        case 'url':
+          formHTML += `<input type="${field.type}" id="${fieldId}" name="${field.name}" ${isRequired}
+                              class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${appConfig.color}-500 focus:border-transparent transition-all duration-200"
+                              placeholder="Masukkan ${field.label.toLowerCase()}" />`;
+          break;
+
+        case 'number':
+          const step = '1';
+          const min = field.validation?.min || '0';
+          formHTML += `<input type="number" id="${fieldId}" name="${field.name}" ${isRequired}
+                              class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${appConfig.color}-500 focus:border-transparent transition-all duration-200"
+                              placeholder="0" step="${step}" min="${min}" />`;
+          break;
+
+        case 'currency':
+          formHTML += `<div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">Rp</span>
+                        <input type="text" id="${fieldId}" name="${field.name}" ${isRequired}
+                              class="w-full pl-12 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${appConfig.color}-500 focus:border-transparent transition-all duration-200"
+                              placeholder="0" 
+                              oninput="window.formatCurrencyInput(this)" 
+                              onblur="window.validateCurrencyInput(this)" />
+                      </div>`;
+          break;
+
+        case 'date':
+          formHTML += `<input type="date" id="${fieldId}" name="${field.name}" ${isRequired}
+                              class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${appConfig.color}-500 focus:border-transparent transition-all duration-200" />`;
+          break;
+
+        case 'datetime':
+          formHTML += `<input type="datetime-local" id="${fieldId}" name="${field.name}" ${isRequired}
+                              class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${appConfig.color}-500 focus:border-transparent transition-all duration-200" />`;
+          break;
+
+        case 'select':
+          formHTML += `<select id="${fieldId}" name="${field.name}" ${isRequired}
+                              class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${appConfig.color}-500 focus:border-transparent transition-all duration-200">
+                         <option value="">Pilih ${field.label}</option>`;
+          if (field.options) {
+            field.options.forEach(option => {
+            const displayText = option.charAt(0).toUpperCase() + option.slice(1).toLowerCase();
+              formHTML += `<option value="${option}">${displayText}</option>`;
+            });
           }
-        } else {
-          fieldElement.value = recordData[field.name];
-        }
+          formHTML += `</select>`;
+          break;
+
+        case 'textarea':
+          formHTML += `<textarea id="${fieldId}" name="${field.name}" ${isRequired}
+                                class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${appConfig.color}-500 focus:border-transparent transition-all duration-200 resize-none"
+                                rows="3" placeholder="Masukkan ${field.label.toLowerCase()}"></textarea>`;
+          break;
+
+        case 'boolean':
+          formHTML += `<div class="flex items-center space-x-3">
+                         <input type="checkbox" id="${fieldId}" name="${field.name}" 
+                                class="w-4 h-4 text-${appConfig.color}-600 bg-gray-100 border-gray-300 rounded focus:ring-${appConfig.color}-500 focus:ring-2" />
+                         <label for="${fieldId}" class="text-sm font-medium text-gray-700">${field.label}</label>
+                       </div>`;
+          break;
+
+        default:
+          formHTML += `<input type="text" id="${fieldId}" name="${field.name}" ${isRequired}
+                              class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${appConfig.color}-500 focus:border-transparent transition-all duration-200"
+                              placeholder="Masukkan ${field.label.toLowerCase()}" />`;
       }
+
+      formHTML += `</div>`;
     });
 
-  } catch (error) {
-    console.error('Error loading record data:', error);
-    alert('Gagal memuat data record');
+    container.innerHTML = formHTML;
   }
-}
+
+  async function loadRecordData(id: string): Promise<void> {
+    try {
+      const response = await makeAuthenticatedRequest(apiEndpoints.show.replace('{id}', id));
+
+      if (!response.ok) {
+        throw new Error(`Failed to load record: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const recordData = data.data || data;
+
+      fieldsConfig.forEach(field => {
+        const fieldElement = document.getElementById(`field-${field.name}`) as HTMLInputElement;
+        if (fieldElement && recordData[field.name] !== undefined) {
+          if (field.type === 'boolean') {
+            fieldElement.checked = !!recordData[field.name];
+          } else if (field.type === 'currency') {
+            const value = recordData[field.name];
+            if (value) {
+              fieldElement.value = parseInt(value).toLocaleString('id-ID');
+              fieldElement.dataset.rawValue = String(value);
+            }
+          } else {
+            fieldElement.value = recordData[field.name];
+          }
+        }
+      });
+
+    } catch (error) {
+      console.error('Error loading record data:', error);
+      alert('Gagal memuat data record');
+    }
+  }
 
   async function handleFormSubmit(event: Event): Promise<void> {
   event.preventDefault();
@@ -1687,8 +1276,7 @@ function setupEventListeners(): void {
       if (field.type === 'boolean') {
         data[field.name] = fieldElement?.checked || false;
       } else if (field.type === 'currency') {
-        // Ambil raw value untuk currency
-        data[field.name] = fieldElement ? getRawCurrencyValue(fieldElement) : null;
+        data[field.name] = fieldElement ? (window as any).getRawCurrencyValue(fieldElement) : null;
       } else if (field.type === 'number') {
         data[field.name] = fieldElement?.value ? parseFloat(fieldElement.value) : null;
       } else {
@@ -1696,130 +1284,161 @@ function setupEventListeners(): void {
       }
     });
 
-      // Determine method and endpoint
-      const isEdit = !!editingId;
-      const method = isEdit ? 'PUT' : 'POST';
-      const endpoint = isEdit ? apiEndpoints.update.replace('{id}', editingId!) : apiEndpoints.create;
+    const isEdit = !!editingId;
+    const method = isEdit ? 'PUT' : 'POST';
+    const endpoint = isEdit ? apiEndpoints.update.replace('{id}', editingId!) : apiEndpoints.create;
 
-      // Make API call
-      const response = await fetch(endpoint, {
-        method,
-        headers: getAuthHeaders(),
-        body: JSON.stringify(data)
-      });
+    const response = await fetch(endpoint, {
+      method,
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP ${response.status}`);
-      }
-
-      // Success
-      alert(isEdit ? 'Data berhasil diperbarui!' : 'Data berhasil ditambahkan!');
-      closeModal();
-      
-      if (dataTable) {
-        dataTable.ajax.reload();
-      }
-
-    } catch (error) {
-      console.error('Error saving data:', error);
-      alert('Gagal menyimpan data: ' + (error instanceof Error ? error.message : 'Unknown error'));
-    } finally {
-      // Reset button state
-      submitButton.disabled = false;
-      submitButton.innerHTML = '<i class="fas fa-save mr-2"></i>Simpan';
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `HTTP ${response.status}`);
     }
+
+    if (typeof (window as any).showNotificationModal === 'function') {
+      (window as any).showNotificationModal({
+        type: 'success',
+        title: 'Berhasil!',
+        message: isEdit ? 'Data berhasil diperbarui!' : 'Data berhasil ditambahkan!',
+        autoClose: true,
+        duration: 3000
+      });
+    } else {
+      alert(isEdit ? 'Data berhasil diperbarui!' : 'Data berhasil ditambahkan!');
+    }      
+    closeModal();
+    
+    if (dataTable) {
+      dataTable.ajax.reload();
+    }
+
+    // TAMBAHKAN INI - Reload cards setelah save
+    await loadCardsData();
+
+  } catch (error) {
+    console.error('Error saving data:', error);
+    if (typeof (window as any).showNotificationModal === 'function') {
+      (window as any).showNotificationModal({
+        type: 'error',
+        title: 'Gagal!',
+        message: 'Gagal menyimpan data: ' + (error instanceof Error ? error.message : 'Unknown error')
+      });
+    } else {
+      alert('Gagal menyimpan data');
+    }
+  } finally {
+    submitButton.disabled = false;
+    submitButton.innerHTML = '<i class="fas fa-save mr-2"></i>Simpan';
   }
+}
 
   async function editRecord(id: string): Promise<void> {
     openModal(id);
   }
 
-  async function deleteRecord(id: string): Promise<void> {
-    if (!confirm('Apakah Anda yakin ingin menghapus data ini?')) {
-      return;
-    }
+ async function deleteRecord(id: string): Promise<void> {
+  if (typeof (window as any).showConfirmModal === 'function') {
+    (window as any).showConfirmModal({
+      title: 'Konfirmasi Hapus',
+      message: 'Apakah Anda yakin ingin menghapus data ini? Tindakan ini tidak dapat dibatalkan.',
+      confirmText: 'Ya, Hapus',
+      cancelText: 'Batal',
+      type: 'danger',
+      onConfirm: async () => {
+        try {
+          const response = await fetch(apiEndpoints.delete.replace('{id}', id), {
+            method: 'DELETE',
+            headers: getAuthHeaders()
+          });
 
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || `HTTP ${response.status}`);
+          }
+
+          if (typeof (window as any).showNotificationModal === 'function') {
+            (window as any).showNotificationModal({
+              type: 'success',
+              title: 'Berhasil!',
+              message: 'Data berhasil dihapus!',
+              autoClose: true,
+              duration: 3000
+            });
+          }
+          
+          if (dataTable) {
+            dataTable.ajax.reload();
+          }
+          await loadCardsData();
+        } catch (error) {
+          console.error('Error deleting record:', error);
+          if (typeof (window as any).showNotificationModal === 'function') {
+            (window as any).showNotificationModal({
+              type: 'error',
+              title: 'Gagal!',
+              message: 'Gagal menghapus data: ' + (error instanceof Error ? error.message : 'Unknown error')
+            });
+          } else {
+            alert('Gagal menghapus data');
+          }
+        }
+      }
+    });
+  } else {
+    // Fallback
+    if (!confirm('Apakah Anda yakin ingin menghapus data ini?')) return;
+    
     try {
       const response = await fetch(apiEndpoints.delete.replace('{id}', id), {
         method: 'DELETE',
         headers: getAuthHeaders()
       });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP ${response.status}`);
-      }
-
+      if (!response.ok) throw new Error('Delete failed');
       alert('Data berhasil dihapus!');
-      
-      if (dataTable) {
-        dataTable.ajax.reload();
-      }
-
+      if (dataTable) dataTable.ajax.reload();
+      await loadCardsData();
     } catch (error) {
-      console.error('Error deleting record:', error);
-      alert('Gagal menghapus data: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      alert('Gagal menghapus data');
     }
   }
+}
 
-  function updateStats(settings: any): void {
-    const info = settings.json;
-    
-    // Update total records
-    const totalRecords = document.getElementById('total-records');
-    if (totalRecords && info) {
-      totalRecords.textContent = info.recordsTotal || '0';
-    }
-
-    // Update last updated
-    const lastUpdated = document.getElementById('last-updated');
-    if (lastUpdated) {
-      lastUpdated.textContent = new Date().toLocaleString('id-ID');
-    }
-  }
-
-  // Utility functions
   function formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
+    return 'Rp ' + new Intl.NumberFormat('id-ID', {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
     }).format(amount || 0);
   }
+
   function formatCurrencyInput(input: HTMLInputElement): void {
-  // Hapus semua karakter non-digit
-  let value = input.value.replace(/\D/g, '');
-  
-  // Jangan format jika kosong
-  if (!value) {
-    input.value = '';
-    return;
+    let value = input.value.replace(/\D/g, '');
+    
+    if (!value) {
+      input.value = '';
+      return;
+    }
+    
+    const numberValue = parseInt(value, 10);
+    input.value = numberValue.toLocaleString('id-ID');
+    input.dataset.rawValue = value;
   }
-  
-  // Convert ke number dan format dengan titik ribuan
-  const numberValue = parseInt(value, 10);
-  input.value = numberValue.toLocaleString('id-ID');
-  
-  // Store raw value in data attribute untuk submit
-  input.dataset.rawValue = value;
-}
 
-// Validate dan clean currency input sebelum submit
-function validateCurrencyInput(input: HTMLInputElement): void {
-  const rawValue = input.value.replace(/\D/g, '');
-  if (rawValue) {
-    input.dataset.rawValue = rawValue;
-    formatCurrencyInput(input);
+  function validateCurrencyInput(input: HTMLInputElement): void {
+    const rawValue = input.value.replace(/\D/g, '');
+    if (rawValue) {
+      input.dataset.rawValue = rawValue;
+      formatCurrencyInput(input);
+    }
   }
-}
 
-// Get raw currency value untuk submit
-function getRawCurrencyValue(input: HTMLInputElement): number {
-  const rawValue = input.dataset.rawValue || input.value.replace(/\D/g, '');
-  return parseInt(rawValue, 10) || 0;
-}
+  function getRawCurrencyValue(input: HTMLInputElement): number {
+    const rawValue = input.dataset.rawValue || input.value.replace(/\D/g, '');
+    return parseInt(rawValue, 10) || 0;
+  }
 
   function formatDate(dateString: string): string {
     if (!dateString) return '-';
@@ -1827,214 +1446,191 @@ function getRawCurrencyValue(input: HTMLInputElement): number {
   }
 
   function showMainContent(): void {
-  // Langsung hide loading dan error state, show main content
-  document.getElementById('loading-state')?.classList.add('hidden');
-  document.getElementById('error-state')?.classList.add('hidden');
-  document.getElementById('main-content')?.classList.remove('hidden');
-}
-
-  // Hapus fungsi showLoadingState dan showErrorState atau buat mereka tidak melakukan apa-apa
-  function showLoadingState(): void {
-    // Tidak melakukan apa-apa, langsung ke main content
-    console.log('Loading state skipped');
+    document.getElementById('loading-state')?.classList.add('hidden');
+    document.getElementById('error-state')?.classList.add('hidden');
+    document.getElementById('main-content')?.classList.remove('hidden');
   }
 
-function showErrorState(message: string): void {
-  // Tidak menampilkan error state, langsung ke main content
-  console.warn('Error state skipped:', message);
-  showMainContent();
-}
-  // Print function (enhanced)
-// Enhanced Print function that shows all columns except ID and Actions
-async function printData(): Promise<void> {
-  try {
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) {
-      throw new Error('Popup blocked. Please allow popups for this site.');
-    }
+  function showErrorState(message: string): void {
+    console.warn('Error state:', message);
+    showMainContent();
+  }
 
-    const title = `${appConfig.title} - ${appConfig.submodule.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}`;
-    
-    // Show loading state on print button
-    const printButton = document.getElementById('btn-print') as HTMLButtonElement;
-    const originalContent = printButton?.innerHTML || '';
-    if (printButton) {
-      printButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Preparing...';
-      printButton.disabled = true;
-    }
+  async function printData(): Promise<void> {
+    try {
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        throw new Error('Popup blocked');
+      }
 
-    // Get all data for printing (not just current page)
-    const allData = await fetchAllData();
-    
-    if (!allData || allData.length === 0) {
-      throw new Error('No data available for printing');
-    }
+      const title = `${appConfig.title} - ${appConfig.submodule.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}`;
+      
+      const printButton = document.getElementById('btn-print') as HTMLButtonElement;
+      if (printButton) {
+        printButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Preparing...';
+        printButton.disabled = true;
+      }
 
-    // Filter columns to exclude ID and Actions
-    const printColumns = columnsConfig.filter(col => 
-      col.data !== 'id' && 
-      col.data !== 'actions' && 
-      col.name !== 'id' && 
-      col.name !== 'actions'
-    );
+      const allData = await fetchAllData();
+      
+      if (!allData || allData.length === 0) {
+        throw new Error('No data available');
+      }
 
-    // Generate table HTML with proper formatting
-    let tableHTML = '<table><thead><tr>';
-    
-    // Add headers
-    printColumns.forEach(col => {
-      tableHTML += `<th>${col.title}</th>`;
-    });
-    tableHTML += '</tr></thead><tbody>';
+      const printColumns = columnsConfig.filter(col => 
+        col.data !== 'id' && 
+        col.data !== 'actions' && 
+        col.name !== 'id' && 
+        col.name !== 'actions' &&
+        col.data !== 'created_at' &&
+        col.data !== 'updated_at' &&
+        col.name !== 'created_at' &&
+        col.name !== 'updated_at'
+      );
 
-    // Add data rows
-    allData.forEach(row => {
-      tableHTML += '<tr>';
+      let tableHTML = '<table><thead><tr>';
+      
       printColumns.forEach(col => {
-        let cellValue = row[col.data] || '';
-        
-        // Format cell values based on column type
-        if (col.type === 'currency' && cellValue != null) {
-          cellValue = formatCurrency(cellValue);
-        } else if (col.type === 'date' && cellValue) {
-          cellValue = formatDate(cellValue);
-        } else if (col.type === 'boolean') {
-          cellValue = cellValue ? 'Ya' : 'Tidak';
-        } else if (cellValue == null || cellValue === '') {
-          cellValue = '-';
-        }
-        
-        tableHTML += `<td>${cellValue}</td>`;
+        tableHTML += `<th>${col.title}</th>`;
       });
-      tableHTML += '</tr>';
-    });
+      tableHTML += '</tr></thead><tbody>';
 
-    tableHTML += '</tbody></table>';
+      allData.forEach(row => {
+        tableHTML += '<tr>';
+        printColumns.forEach(col => {
+          let cellValue = row[col.data] || '';
+          
+          if (col.type === 'currency' && cellValue != null) {
+            cellValue = formatCurrency(cellValue);
+          } else if (col.type === 'date' && cellValue) {
+            cellValue = formatDate(cellValue);
+          } else if (col.type === 'boolean') {
+            cellValue = cellValue ? 'Ya' : 'Tidak';
+          } else if (cellValue == null || cellValue === '') {
+            cellValue = '-';
+          }
+          
+          tableHTML += `<td>${cellValue}</td>`;
+        });
+        tableHTML += '</tr>';
+      });
 
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>${title} - Print</title>
-          <style>
-            body {
-              font-family: Arial, sans-serif;
-              margin: 20px;
-              color: #333;
-              line-height: 1.4;
-            }
-            h1 {
-              color: #4F46E5;
-              text-align: center;
-              margin-bottom: 10px;
-              font-size: 24px;
-            }
-            .print-info {
-              text-align: center;
-              color: #666;
-              margin-bottom: 30px;
-              font-size: 14px;
-            }
-            table {
-              width: 100%;
-              border-collapse: collapse;
-              margin-top: 20px;
-              font-size: 12px;
-            }
-            th, td {
-              border: 1px solid #ddd;
-              padding: 6px 8px;
-              text-align: left;
-              vertical-align: top;
-            }
-            th {
-              background-color: #4F46E5;
-              color: white;
-              font-weight: bold;
-              text-align: center;
-            }
-            tr:nth-child(even) {
-              background-color: #f9f9f9;
-            }
-            
-            @media print {
-              body { 
-                margin: 0; 
-                font-size: 11px;
+      tableHTML += '</tbody></table>';
+
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>${title} - Print</title>
+            <style>
+              body {
+                font-family: Arial, sans-serif;
+                margin: 20px;
+                color: #333;
+                line-height: 1.4;
+              }
+              h1 {
+                color: #4F46E5;
+                text-align: center;
+                margin-bottom: 10px;
+                font-size: 24px;
+              }
+              .print-info {
+                text-align: center;
+                color: #666;
+                margin-bottom: 30px;
+                font-size: 14px;
               }
               table {
-                font-size: 10px;
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 20px;
+                font-size: 12px;
               }
               th, td {
-                padding: 4px 6px;
+                border: 1px solid #ddd;
+                padding: 6px 8px;
+                text-align: left;
+                vertical-align: top;
               }
-              tr {
-                page-break-inside: avoid;
+              th {
+                background-color: #4F46E5;
+                color: white;
+                font-weight: bold;
+                text-align: center;
               }
-            }
-          </style>
-        </head>
-        <body>
-          <h1>${title}</h1>
-          <div class="print-info">
-            <p><strong>Printed on:</strong> ${new Date().toLocaleString('id-ID')}</p>
-            <p><strong>Total Records:</strong> ${allData.length}</p>
-          </div>
-          ${tableHTML}
-        </body>
-      </html>
-    `);
+              tr:nth-child(even) {
+                background-color: #f9f9f9;
+              }
+              
+              @media print {
+                body { 
+                  margin: 0; 
+                  font-size: 11px;
+                }
+                table {
+                  font-size: 10px;
+                }
+                th, td {
+                  padding: 4px 6px;
+                }
+                tr {
+                  page-break-inside: avoid;
+                }
+              }
+            </style>
+          </head>
+          <body>
+            <h1>${title}</h1>
+            <div class="print-info">
+              <p><strong>Printed on:</strong> ${new Date().toLocaleString('id-ID')}</p>
+              <p><strong>Total Records:</strong> ${allData.length}</p>
+            </div>
+            ${tableHTML}
+          </body>
+        </html>
+      `);
 
-    printWindow.document.close();
-    printWindow.focus();
-    
-    // Wait for content to load, then print
-    setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
-    }, 1500);
+      printWindow.document.close();
+      printWindow.focus();
+      
+      setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+      }, 1500);
 
-    // Show success notification
-    showNotification('Data berhasil disiapkan untuk dicetak!', 'success');
+      showNotification('Data berhasil disiapkan untuk dicetak!', 'success');
 
-  } catch (error) {
-    console.error('Error printing:', error);
-    showNotification('Gagal mencetak data: ' + (error instanceof Error ? error.message : 'Unknown error'), 'error');
-  } finally {
-    // Reset button state
-    const printButton = document.getElementById('btn-print') as HTMLButtonElement;
-    if (printButton) {
-      printButton.innerHTML = '<i class="fas fa-print mr-2"></i><span class="hidden sm:inline">Print</span><span class="sm:hidden">Print</span>';
-      printButton.disabled = false;
+    } catch (error) {
+      console.error('Error printing:', error);
+      showNotification('Gagal mencetak data', 'error');
+    } finally {
+      const printButton = document.getElementById('btn-print') as HTMLButtonElement;
+      if (printButton) {
+        printButton.innerHTML = '<i class="fas fa-print mr-2"></i><span class="hidden sm:inline">Print</span><span class="sm:hidden">Print</span>';
+        printButton.disabled = false;
+      }
     }
   }
-}
 
-// Export these functions to global scope
-(window as any).exportToExcel = exportToExcel;
-(window as any).exportToPDF = exportToPDF;
-(window as any).printData = printData;
-
-  // Global functions for HTML onclick handlers
+  // Export functions to global scope
+  (window as any).exportToExcel = exportToExcel;
+  (window as any).exportToPDF = exportToPDF;
+  (window as any).printData = printData;
   (window as any).editRecord = editRecord;
   (window as any).deleteRecord = deleteRecord;
   (window as any).openModal = openModal;
   (window as any).closeModal = closeModal;
   (window as any).resetFilters = resetFilters;
-  (window as any).initializeApp = initializeApp;
-  // Di bagian bawah sebelum DOMContentLoaded
   (window as any).formatCurrencyInput = formatCurrencyInput;
   (window as any).validateCurrencyInput = validateCurrencyInput;
   (window as any).getRawCurrencyValue = getRawCurrencyValue;
 
   // Initialize when DOM is ready
   document.addEventListener('DOMContentLoaded', initializeApp);
-
-  console.log('Dynamic DataTable script loaded');
 </script>
 
 <style>
-  /* Modern styles for the dynamic table */
   .dynamic-datatable-container {
     animation: slideInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
   }
@@ -2059,7 +1655,6 @@ async function printData(): Promise<void> {
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   }
 
-  /* Form styles */
   .form-group {
     margin-bottom: 1rem;
   }
@@ -2068,7 +1663,6 @@ async function printData(): Promise<void> {
     margin-bottom: 0;
   }
 
-  /* Button styles */
   .btn {
     display: inline-flex;
     align-items: center;
@@ -2117,7 +1711,6 @@ async function printData(): Promise<void> {
     box-shadow: 0 8px 16px -4px rgba(239, 68, 68, 0.4);
   }
 
-  /* Badge styles */
   .badge {
     display: inline-flex;
     align-items: center;
@@ -2139,7 +1732,6 @@ async function printData(): Promise<void> {
     background-color: #f3f4f6;
   }
 
-  /* DataTable enhancements */
   .dataTables_wrapper {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   }
@@ -2242,14 +1834,13 @@ async function printData(): Promise<void> {
     transform: translateY(-1px) !important;
   }
 
-  /* Responsive improvements */
   @media (max-width: 768px) {
     .modern-datatable-header {
       padding: 1rem;
     }
 
     .search-container input {
-      font-size: 16px !important; /* Prevent zoom on iOS */
+      font-size: 16px !important;
     }
 
     .btn {
@@ -2258,15 +1849,6 @@ async function printData(): Promise<void> {
     }
   }
 
-  /* Loading and error states */
-  #loading-state, #error-state {
-    min-height: 400px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  /* Table responsive improvements */
   .overflow-x-auto::-webkit-scrollbar {
     height: 8px;
   }

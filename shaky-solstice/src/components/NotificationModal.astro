@@ -1,0 +1,310 @@
+---
+---
+
+<!-- Modern Notification Modal -->
+<div id="notification-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-[9999] p-4" style="display: none;">
+  <div id="notification-content" class="bg-white rounded-2xl p-6 md:p-8 w-full max-w-md mx-auto shadow-2xl transform transition-all duration-300 scale-95 opacity-0">
+    <!-- Icon Container -->
+    <div id="notification-icon-container" class="mx-auto flex items-center justify-center w-16 h-16 md:w-20 md:h-20 rounded-full mb-4">
+      <i id="notification-icon" class="text-3xl md:text-4xl"></i>
+    </div>
+    
+    <!-- Title -->
+    <h3 id="notification-title" class="text-xl md:text-2xl font-bold text-center mb-2 text-gray-800">
+      <!-- Dynamic title -->
+    </h3>
+    
+    <!-- Message -->
+    <p id="notification-message" class="text-center text-gray-600 mb-6">
+      <!-- Dynamic message -->
+    </p>
+    
+    <!-- Action Button -->
+    <button id="notification-button" 
+            class="w-full py-3 rounded-lg font-semibold text-white transition-all duration-300 hover:shadow-lg transform hover:scale-105">
+      OK
+    </button>
+  </div>
+</div>
+
+<!-- Confirm Modal -->
+<div id="confirm-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-[9999] p-4" style="display: none;">
+  <div id="confirm-content" class="bg-white rounded-2xl p-6 md:p-8 w-full max-w-md mx-auto shadow-2xl transform transition-all duration-300 scale-95 opacity-0">
+    <!-- Icon Container -->
+    <div id="confirm-icon-container" class="mx-auto flex items-center justify-center w-16 h-16 md:w-20 md:h-20 rounded-full mb-4">
+      <i id="confirm-icon" class="text-3xl md:text-4xl"></i>
+    </div>
+    
+    <!-- Title -->
+    <h3 id="confirm-title" class="text-xl md:text-2xl font-bold text-center mb-2 text-gray-800">
+      <!-- Dynamic title -->
+    </h3>
+    
+    <!-- Message -->
+    <p id="confirm-message" class="text-center text-gray-600 mb-6">
+      <!-- Dynamic message -->
+    </p>
+    
+    <!-- Action Buttons -->
+    <div class="flex gap-3">
+      <button id="confirm-cancel-button" onclick="window.closeConfirmModal()"
+              class="flex-1 py-3 rounded-lg font-semibold bg-gray-200 text-gray-700 hover:bg-gray-300 transition-all duration-300">
+        Batal
+      </button>
+      <button id="confirm-button"
+              class="flex-1 py-3 rounded-lg font-semibold text-white transition-all duration-300 hover:shadow-lg transform hover:scale-105">
+        Ya
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Show notification modal with custom content
+  function showNotificationModal(options: {
+    type?: 'success' | 'error' | 'warning' | 'info';
+    title?: string;
+    message: string;
+    buttonText?: string;
+    autoClose?: boolean;
+    duration?: number;
+  }): void {
+    const {
+      type = 'success',
+      title = '',
+      message = '',
+      buttonText = 'OK',
+      autoClose = false,
+      duration = 3000
+    } = options;
+
+    const modal = document.getElementById('notification-modal');
+    const content = document.getElementById('notification-content');
+    const iconContainer = document.getElementById('notification-icon-container');
+    const icon = document.getElementById('notification-icon');
+    const titleElement = document.getElementById('notification-title');
+    const messageElement = document.getElementById('notification-message');
+    const button = document.getElementById('notification-button');
+
+    if (!modal || !content || !iconContainer || !icon || !titleElement || !messageElement || !button) return;
+
+    // Configure based on type
+    const configs = {
+      success: {
+        iconBg: 'bg-green-100',
+        iconColor: 'text-green-600',
+        icon: 'fas fa-check-circle',
+        buttonBg: 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700',
+        defaultTitle: 'Berhasil!'
+      },
+      error: {
+        iconBg: 'bg-red-100',
+        iconColor: 'text-red-600',
+        icon: 'fas fa-times-circle',
+        buttonBg: 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700',
+        defaultTitle: 'Gagal!'
+      },
+      warning: {
+        iconBg: 'bg-yellow-100',
+        iconColor: 'text-yellow-600',
+        icon: 'fas fa-exclamation-triangle',
+        buttonBg: 'bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700',
+        defaultTitle: 'Peringatan!'
+      },
+      info: {
+        iconBg: 'bg-blue-100',
+        iconColor: 'text-blue-600',
+        icon: 'fas fa-info-circle',
+        buttonBg: 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700',
+        defaultTitle: 'Informasi'
+      }
+    };
+
+    const config = configs[type];
+
+    // Reset classes
+    iconContainer.className = `mx-auto flex items-center justify-center w-16 h-16 md:w-20 md:h-20 rounded-full mb-4 ${config.iconBg}`;
+    icon.className = `${config.icon} text-3xl md:text-4xl ${config.iconColor}`;
+    button.className = `w-full py-3 rounded-lg font-semibold text-white transition-all duration-300 hover:shadow-lg transform hover:scale-105 ${config.buttonBg}`;
+
+    // Set content
+    titleElement.textContent = title || config.defaultTitle;
+    messageElement.textContent = message;
+    button.textContent = buttonText;
+
+    // Remove old event listeners and add new one
+    const newButton = button.cloneNode(true) as HTMLButtonElement;
+    button.parentNode?.replaceChild(newButton, button);
+    newButton.addEventListener('click', closeNotificationModal);
+
+    // Show modal with animation
+    modal.style.display = 'flex';
+    setTimeout(() => {
+      content.classList.remove('scale-95', 'opacity-0');
+      content.classList.add('scale-100', 'opacity-100');
+    }, 10);
+
+    // Auto close if enabled
+    if (autoClose) {
+      setTimeout(() => {
+        closeNotificationModal();
+      }, duration);
+    }
+  }
+
+  // Close notification modal
+  function closeNotificationModal(): void {
+    const modal = document.getElementById('notification-modal');
+    const content = document.getElementById('notification-content');
+
+    if (!modal || !content) return;
+
+    content.classList.add('scale-95', 'opacity-0');
+    content.classList.remove('scale-100', 'opacity-100');
+
+    setTimeout(() => {
+      modal.style.display = 'none';
+    }, 300);
+  }
+
+  // Export to global scope
+  (window as any).showNotificationModal = showNotificationModal;
+  (window as any).closeNotificationModal = closeNotificationModal;
+
+  // Close on outside click
+  document.getElementById('notification-modal')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+      closeNotificationModal();
+    }
+  });
+
+  // Close on ESC key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      const modal = document.getElementById('notification-modal');
+      if (modal && modal.style.display === 'flex') {
+        closeNotificationModal();
+      }
+      const confirmModal = document.getElementById('confirm-modal');
+      if (confirmModal && confirmModal.style.display === 'flex') {
+        closeConfirmModal();
+      }
+    }
+  });
+
+  // Confirm Modal Functions
+  function showConfirmModal(options: {
+    title?: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    onConfirm: () => void;
+    type?: 'danger' | 'warning' | 'info';
+  }): void {
+    const {
+      title = 'Konfirmasi',
+      message,
+      confirmText = 'Ya',
+      cancelText = 'Batal',
+      onConfirm,
+      type = 'danger'
+    } = options;
+
+    const modal = document.getElementById('confirm-modal');
+    const content = document.getElementById('confirm-content');
+    const iconContainer = document.getElementById('confirm-icon-container');
+    const icon = document.getElementById('confirm-icon');
+    const titleElement = document.getElementById('confirm-title');
+    const messageElement = document.getElementById('confirm-message');
+    const confirmButton = document.getElementById('confirm-button');
+    const cancelButton = document.getElementById('confirm-cancel-button');
+
+    if (!modal || !content || !iconContainer || !icon || !titleElement || !messageElement || !confirmButton || !cancelButton) return;
+
+    const configs = {
+      danger: {
+        iconBg: 'bg-red-100',
+        iconColor: 'text-red-600',
+        icon: 'fas fa-exclamation-triangle',
+        buttonBg: 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700'
+      },
+      warning: {
+        iconBg: 'bg-yellow-100',
+        iconColor: 'text-yellow-600',
+        icon: 'fas fa-exclamation-circle',
+        buttonBg: 'bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700'
+      },
+      info: {
+        iconBg: 'bg-blue-100',
+        iconColor: 'text-blue-600',
+        icon: 'fas fa-info-circle',
+        buttonBg: 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700'
+      }
+    };
+
+    const config = configs[type];
+
+    iconContainer.className = `mx-auto flex items-center justify-center w-16 h-16 md:w-20 md:h-20 rounded-full mb-4 ${config.iconBg}`;
+    icon.className = `${config.icon} text-3xl md:text-4xl ${config.iconColor}`;
+    confirmButton.className = `flex-1 py-3 rounded-lg font-semibold text-white transition-all duration-300 hover:shadow-lg transform hover:scale-105 ${config.buttonBg}`;
+
+    titleElement.textContent = title;
+    messageElement.textContent = message;
+    confirmButton.textContent = confirmText;
+    cancelButton.textContent = cancelText;
+
+    // Remove old event listeners
+    const newConfirmButton = confirmButton.cloneNode(true) as HTMLButtonElement;
+    confirmButton.parentNode?.replaceChild(newConfirmButton, confirmButton);
+
+    newConfirmButton.addEventListener('click', () => {
+      onConfirm();
+      closeConfirmModal();
+    });
+
+    modal.style.display = 'flex';
+    setTimeout(() => {
+      content.classList.remove('scale-95', 'opacity-0');
+      content.classList.add('scale-100', 'opacity-100');
+    }, 10);
+  }
+
+  function closeConfirmModal(): void {
+    const modal = document.getElementById('confirm-modal');
+    const content = document.getElementById('confirm-content');
+
+    if (!modal || !content) return;
+
+    content.classList.add('scale-95', 'opacity-0');
+    content.classList.remove('scale-100', 'opacity-100');
+
+    setTimeout(() => {
+      modal.style.display = 'none';
+    }, 300);
+  }
+
+  (window as any).showConfirmModal = showConfirmModal;
+  (window as any).closeConfirmModal = closeConfirmModal;
+
+  // Close confirm modal on outside click
+  document.getElementById('confirm-modal')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+      closeConfirmModal();
+    }
+  });
+</script>
+
+<style>
+  #notification-modal {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+</style>
