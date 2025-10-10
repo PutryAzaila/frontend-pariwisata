@@ -78,8 +78,8 @@ const currentDate = new Date().toLocaleDateString('id-ID', {
 
           <div class="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 hidden" id="profile-dropdown">
             <div class="px-4 py-2 border-b border-gray-100">
-              <p class="text-sm font-medium text-gray-900">Admin</p>
-              <p class="text-xs text-gray-500">admin@gmail.com</p>
+              <p class="text-sm font-medium text-gray-900" id="user-name">Admin</p>
+              <p class="text-xs text-gray-500" id="user-email">admin@gmail.com</p>
             </div>
             <a href="/profile" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">Profile</a>
             <div class="border-t border-gray-100 mt-2 pt-2">
@@ -123,6 +123,21 @@ const currentDate = new Date().toLocaleDateString('id-ID', {
     if (dropdown) dropdown.classList.toggle('hidden');
   }
 
+  function loadUserInfo() {
+    const userData = localStorage.getItem('user_data');
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        const userNameElem = document.getElementById('user-name');
+        if (userNameElem) userNameElem.textContent = user.name || 'Admin';
+        const userEmailElem = document.getElementById('user-email');
+        if (userEmailElem) userEmailElem.textContent = user.email || 'admin@gmail.com';
+      } catch (e) {
+        console.error('Error parsing user data from localStorage', e);
+      }
+    }
+  }
+
   document.addEventListener('click', function(e) {
     const dropdown = document.getElementById('profile-dropdown');
     const clickedButton = document.querySelector('button[onclick="toggleProfileDropdown()"]');
@@ -135,6 +150,7 @@ const currentDate = new Date().toLocaleDateString('id-ID', {
     const savedTheme = localStorage.getItem('theme') || 'light';
     const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     if (savedTheme === 'dark' || (!savedTheme && systemDark)) document.documentElement.classList.add('dark');
+    loadUserInfo();
   });
 
   window.toggleTheme = toggleTheme;
