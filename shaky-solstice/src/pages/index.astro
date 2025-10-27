@@ -77,8 +77,8 @@ import AdminLayout from '../layouts/AdminLayout.astro';
           <span class="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-sm font-medium rounded-full w-fit">Tutorial</span>
         </div>
         
-        <div class="space-y-6">
-          <!-- Getting Started -->
+        <div class="space-y-6" id="tutorialContent">
+          <!-- Getting Started - Tampil untuk semua role -->
           <div class="border-l-4 border-blue-500 pl-6">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">🚀 Memulai</h3>
             <ul class="space-y-2 text-gray-700 dark:text-gray-300">
@@ -97,73 +97,93 @@ import AdminLayout from '../layouts/AdminLayout.astro';
             </ul>
           </div>
 
-          <!-- POKDARWIS -->
-          <div class="border-l-4 border-green-500 pl-6">
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">🎫 Mengelola POKDARWIS</h3>
-              <ul class="space-y-2 text-gray-700 dark:text-gray-300">
-                <li>
-                  <a href="/pokdarwis/tiket" class="hover:underline block hover:text-green-600 dark:hover:text-green-400 transition-colors">
-                    • <strong>Tiket Wisata:</strong> Kelola penjualan tiket harian dengan setoran 25.000/orang
-                  </a>
-                </li>
-                <li>
-                  <a href="/pokdarwis/river-tubing" class="hover:underline block hover:text-green-600 dark:hover:text-green-400 transition-colors">
-                    • <strong>River Tubing:</strong> Atur penyewaan peralatan river tubing per sesi
-                  </a>
-                </li>
-                <li>
-                  <a href="/pokdarwis/warung" class="hover:underline block hover:text-green-600 dark:hover:text-green-400 transition-colors">
-                    • <strong>Sewa Warung:</strong> Pantau setoran mingguan dari warung-warung
-                  </a>
-                </li>
-                <li>
-                  <a href="/pokdarwis/umkm" class="hover:underline block hover:text-green-600 dark:hover:text-green-400 transition-colors">
-                    • <strong>Sewa UMKM:</strong> Kelola setoran bulanan dari UMKM lokal
-                  </a>
-                </li>
-                <li>
-                  <a href="/pokdarwis/pakan-ikan" class="hover:underline block hover:text-green-600 dark:hover:text-green-400 transition-colors">
-                    • <strong>Pakan Ikan:</strong> Atur penjualan pakan ikan untuk pengunjung
-                  </a>
-                </li>
-              </ul>
-          </div>
-
-          <!-- BUMDES -->
-          <div class="border-l-4 border-purple-500 pl-6">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">🏪 Mengelola BUMDES</h3>
+          <!-- POKDARWIS - Hanya tampil untuk role pokdarwis dan admin -->
+          <div class="border-l-4 border-green-500 pl-6 tutorial-pokdarwis" style="display: none;">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">🎫 Mengelola POKDARWIS</h3>
             <ul class="space-y-2 text-gray-700 dark:text-gray-300">
-              <li>
-                <a href="/bumdes/resto" class="hover:underline hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
-                  • <strong>Sewa Resto:</strong> Pantau setoran bulanan dari restoran
+              <li class="flex items-start gap-3">
+                <span class="w-6 h-6 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full flex items-center justify-center text-sm font-medium mt-0.5 flex-shrink-0">1</span>
+                <a href="/pokdarwis/tiket" class="hover:underline block hover:text-green-600 dark:hover:text-green-400 transition-colors">
+                  <strong>Tiket Wisata:</strong> Kelola penjualan tiket harian dengan setoran 25.000/orang
                 </a>
               </li>
-              <li>
-                <a href="/bumdes/internet" class="hover:underline hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
-                  • <strong>Sewa Internet:</strong> Kelola pembayaran dari pihak ketiga untuk layanan internet
+              <li class="flex items-start gap-3">
+                <span class="w-6 h-6 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full flex items-center justify-center text-sm font-medium mt-0.5 flex-shrink-0">2</span>
+                <a href="/pokdarwis/river-tubing" class="hover:underline block hover:text-green-600 dark:hover:text-green-400 transition-colors">
+                  <strong>River Tubing:</strong> Atur penyewaan peralatan river tubing per sesi
                 </a>
               </li>
-              <li>
-                <a href="/bumdes/usaha" class="hover:underline hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
-                  • <strong>Tambah Usaha:</strong> Daftarkan usaha baru ke dalam sistem BUMDES
+              <li class="flex items-start gap-3">
+                <span class="w-6 h-6 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full flex items-center justify-center text-sm font-medium mt-0.5 flex-shrink-0">3</span>
+                <a href="/pokdarwis/warung" class="hover:underline block hover:text-green-600 dark:hover:text-green-400 transition-colors">
+                  <strong>Sewa Warung:</strong> Pantau setoran mingguan dari warung-warung
+                </a>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="w-6 h-6 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full flex items-center justify-center text-sm font-medium mt-0.5 flex-shrink-0">4</span>
+                <a href="/pokdarwis/umkm" class="hover:underline block hover:text-green-600 dark:hover:text-green-400 transition-colors">
+                  <strong>Sewa UMKM:</strong> Kelola setoran bulanan dari UMKM lokal
+                </a>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="w-6 h-6 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full flex items-center justify-center text-sm font-medium mt-0.5 flex-shrink-0">5</span>
+                <a href="/pokdarwis/pakan-ikan" class="hover:underline block hover:text-green-600 dark:hover:text-green-400 transition-colors">
+                  <strong>Pakan Ikan:</strong> Atur penjualan pakan ikan untuk pengunjung
                 </a>
               </li>
             </ul>
           </div>
 
-          <!-- Reports -->
+          <!-- BUMDES - Hanya tampil untuk role bumdes dan admin -->
+          <div class="border-l-4 border-purple-500 pl-6 tutorial-bumdes" style="display: none;">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">🏪 Mengelola BUMDES</h3>
+            <ul class="space-y-2 text-gray-700 dark:text-gray-300">
+              <li class="flex items-start gap-3">
+                <span class="w-6 h-6 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded-full flex items-center justify-center text-sm font-medium mt-0.5 flex-shrink-0">1</span>
+                <a href="/bumdes/resto" class="hover:underline hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+                  <strong>Sewa Resto:</strong> Pantau setoran bulanan dari restoran
+                </a>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="w-6 h-6 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded-full flex items-center justify-center text-sm font-medium mt-0.5 flex-shrink-0">2</span>
+                <a href="/bumdes/internet" class="hover:underline hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+                  <strong>Sewa Internet:</strong> Kelola pembayaran dari pihak ketiga untuk layanan internet
+                </a>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="w-6 h-6 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded-full flex items-center justify-center text-sm font-medium mt-0.5 flex-shrink-0">3</span>
+                <a href="/bumdes/usaha" class="hover:underline hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+                  <strong>Tambah Usaha:</strong> Daftarkan usaha baru ke dalam sistem BUMDES
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Reports - Tampil untuk semua role -->
           <div class="border-l-4 border-yellow-500 pl-6">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">📊 Laporan</h3>
             <ul class="space-y-2 text-gray-700 dark:text-gray-300">
-              <li>• Akses laporan keuangan POKDARWIS dan BUMDES secara terpisah</li>
-              <li>• Export data dalam format Excel atau PDF</li>
-              <li>• Filter laporan berdasarkan tanggal, jenis usaha, atau periode tertentu</li>
-              <li>• Grafik dan visualisasi data untuk analisis yang lebih mudah</li>
+              <li class="flex items-start gap-3">
+                <span class="w-6 h-6 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-full flex items-center justify-center text-sm font-medium mt-0.5 flex-shrink-0">1</span>
+                <span>Akses laporan keuangan POKDARWIS dan BUMDES secara terpisah</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="w-6 h-6 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-full flex items-center justify-center text-sm font-medium mt-0.5 flex-shrink-0">2</span>
+                <span>Export data dalam format Excel atau PDF</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="w-6 h-6 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-full flex items-center justify-center text-sm font-medium mt-0.5 flex-shrink-0">3</span>
+                <span>Filter laporan berdasarkan tanggal, jenis usaha, atau periode tertentu</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="w-6 h-6 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-full flex items-center justify-center text-sm font-medium mt-0.5 flex-shrink-0">4</span>
+                <span>Grafik dan visualisasi data untuk analisis yang lebih mudah</span>
+              </li>
             </ul>
           </div>
         </div>
 
-       <!-- Action Buttons -->
+        <!-- Action Buttons -->
         <div class="mt-6 lg:mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4">
           <button onclick="navigateToInput()" class="btn-primary flex-1 sm:flex-none flex items-center justify-center">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -263,22 +283,56 @@ import AdminLayout from '../layouts/AdminLayout.astro';
 <script>
   // Dashboard functionality
   function navigateToInput() {
-    // Show options modal or redirect to most common input
-    window.location.href = '/pokdarwis';
+    const userRole = getUserRole();
+    
+    // Redirect based on role
+    if (userRole === 'pokdarwis') {
+      window.location.href = '/pokdarwis';
+    } else if (userRole === 'bumdes') {
+      window.location.href = '/bumdes';
+    } else {
+      // Admin bisa pilih
+      window.location.href = '/pokdarwis';
+    }
   }
 
   function navigateToReport() {
-    // Redirect to reports page
     window.location.href = '/laporan';
   }
 
-  // Load dashboard data when page loads
-  document.addEventListener('DOMContentLoaded', () => {
-    // Wait for AdminUtils to be available
-    setTimeout(() => {
-      loadUserInfo();
-    }, 100);
-  });
+  function getUserRole() {
+    if (window.AdminUtils) {
+      const userData = window.AdminUtils.auth.getUserData();
+      if (userData && userData.role) {
+        return userData.role.toLowerCase();
+      }
+    }
+    
+    const roleFromStorage = localStorage.getItem('user_role');
+    return roleFromStorage ? roleFromStorage.toLowerCase() : 'admin';
+  }
+
+  function showTutorialByRole() {
+    const userRole = getUserRole();
+    
+    // Sembunyikan semua tutorial spesifik dulu
+    const pokdarwisTutorial = document.querySelector('.tutorial-pokdarwis') as HTMLElement;
+    const bumdesTutorial = document.querySelector('.tutorial-bumdes') as HTMLElement;
+    
+    if (pokdarwisTutorial) pokdarwisTutorial.style.display = 'none';
+    if (bumdesTutorial) bumdesTutorial.style.display = 'none';
+    
+    // Tampilkan tutorial sesuai role
+    if (userRole === 'pokdarwis') {
+      if (pokdarwisTutorial) pokdarwisTutorial.style.display = 'block';
+    } else if (userRole === 'bumdes') {
+      if (bumdesTutorial) bumdesTutorial.style.display = 'block';
+    } else if (userRole === 'admin') {
+      // Admin bisa lihat semua tutorial
+      if (pokdarwisTutorial) pokdarwisTutorial.style.display = 'block';
+      if (bumdesTutorial) bumdesTutorial.style.display = 'block';
+    }
+  }
 
   function loadUserInfo() {
     if (!window.AdminUtils) return;
@@ -317,4 +371,13 @@ import AdminLayout from '../layouts/AdminLayout.astro';
       }
     }
   }
+
+  // Load dashboard data when page loads
+  document.addEventListener('DOMContentLoaded', () => {
+    // Wait for AdminUtils to be available
+    setTimeout(() => {
+      loadUserInfo();
+      showTutorialByRole();
+    }, 100);
+  });
 </script>
